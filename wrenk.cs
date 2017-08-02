@@ -15,9 +15,10 @@ namespace wrenk
     class line
     {
         public double x1, y1, x2, y2;
-        public bool physics_occluder;
-        public bool light_occluder;
-        public bool decoration;
+        public bool physics_occluder = true;
+        public bool light_occluder = true;
+        public bool decoration = true;
+        public bool selected = false;
     }
 
     class model
@@ -42,13 +43,19 @@ namespace wrenk
         static public int LAYER_PHOTONS = 3;
         static public int LAYER_LIGHTS = 4;
 
-        static public int leftclick_state = 0;
+        static public int input_state = 0;
 
         static public int LS_STATE_OPEN = 0;
         static public int LS_STATE_DEFINING_LINE = 1;
+        static public int RS_STATE_SELECTING = 2;
+
+        static public double open_sel_x = 0.0;
+        static public double open_sel_y = 0.0;
 
         static public double open_line_x = 0.0;
         static public double open_line_y = 0.0;
+
+        static public double snap = 5.0;
 
     }
    
@@ -59,12 +66,14 @@ namespace wrenk
         private System.Timers.Timer refTimer;
         private System.Drawing.Pen area_pen;
         private System.Drawing.Pen pending_line_pen;
-
+        private System.Drawing.Pen base_line_pen;
+        private System.Drawing.Pen selected_line_pen;
+        private System.Drawing.Pen sel_pen;
         private List<string> layernames = new List<string>();
         public viewForm()
         {
             this.DoubleBuffered = true;
-            this.refTimer = new System.Timers.Timer(30);
+            this.refTimer = new System.Timers.Timer(45);
             this.refTimer.Elapsed += RefTimer_Elapsed;
             this.refTimer.Start();
             this.FormClosed += ViewForm_FormClosed;
@@ -77,7 +86,13 @@ namespace wrenk
             this.area_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
             this.pending_line_pen = new System.Drawing.Pen(Color.OliveDrab, 1.5f);
             this.pending_line_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+            this.base_line_pen = new System.Drawing.Pen(Color.CadetBlue, 1.9f);
+            this.selected_line_pen = new System.Drawing.Pen(Color.Red, 2.0f);
 
+            this.sel_pen = new System.Drawing.Pen(Color.CornflowerBlue, 0.5f);
+            this.sel_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+
+            
 
             this.MouseClick += ViewForm_MouseClick;
             this.MouseMove += ViewForm_MouseMove;
@@ -102,7 +117,15 @@ namespace wrenk
             if (e.KeyChar == '[') offs = -1;
                 state.layer_index = (state.layer_index+offs) % layernames.Count;
             if (state.layer_index < 0) state.layer_index = layernames.Count - 1;
-            state.leftclick_state = state.LS_STATE_OPEN;
+            state.input_state = state.LS_STATE_OPEN;
+
+            if(state.layer_index==0)
+            {
+                if(e.KeyChar=='x')
+                {
+                    model.lines = model.lines.Where(x => x.selected == false).ToList();
+                }
+            }
 
         }
 
@@ -122,30 +145,72 @@ namespace wrenk
             
         }
 
-        private void ViewForm_MouseClick(object sender, MouseEventArgs e)
+        private void commitSelection()
         {
-            if(e.Button == MouseButtons.Right)
+            if(state.layer_index == state.LAYER_LINES)
             {
-                if (state.leftclick_state == state.LS_STATE_OPEN)
+                double gx = Math.Max(state.open_sel_x, state.mx);
+                double lx = Math.Min(state.open_sel_x, state.mx);
+                double gy = Math.Max(state.open_sel_y, state.my);
+                double ly = Math.Min(state.open_sel_y, state.my);
+
+                foreach( var line in model.lines )
                 {
-                    state.cx = state.mx;
-                    state.cy = state.my;
-                } else
-                {
-                    state.leftclick_state = state.LS_STATE_OPEN;
+                    if(
+                       (line.x1 > lx) && (line.x1 < gx) && (line.x2 > lx) && (line.x2 < gx) &&
+                        (line.y1 > ly) && (line.y1 < gy) && (line.y2 > ly) && (line.y2 < gy)
+                        ) {
+                        line.selected = true;
+
+                    } else
+                    {
+                        line.selected = false;
+                    }
                 }
             }
+        }
+
+        private void ViewForm_MouseClick(object sender, MouseEventArgs e)
+        {
+            if(e.Button == MouseButtons.Middle)
+            {
+                state.cx = state.mx;
+                state.cy = state.my;
+            }
+
+            if (e.Button == MouseButtons.Right)
+            {
+                if(state.input_state == state.LS_STATE_OPEN)
+                {
+
+                    state.input_state = state.RS_STATE_SELECTING;
+                    state.open_sel_x = state.mx;
+                    state.open_sel_y = state.my;
+                }
+                else 
+                if(state.input_state == state.RS_STATE_SELECTING)
+                {
+                    this.commitSelection();
+                    state.input_state = state.LS_STATE_OPEN;
+                }
+                else
+                if (state.input_state == state.LS_STATE_DEFINING_LINE)
+                {
+                    state.input_state = state.LS_STATE_OPEN;
+                }
+            }
+
             if(e.Button == MouseButtons.Left)
             {
-                if (state.leftclick_state == state.LS_STATE_OPEN && state.layer_index == 0)
+                if (state.input_state == state.LS_STATE_OPEN && state.layer_index == 0)
                 {
                     state.open_line_x = state.mx;
                     state.open_line_y = state.my;
 
-                    state.leftclick_state = state.LS_STATE_DEFINING_LINE;
+                    state.input_state = state.LS_STATE_DEFINING_LINE;
                 }
 
-                if(state.leftclick_state == state.LS_STATE_DEFINING_LINE)
+                if(state.input_state == state.LS_STATE_DEFINING_LINE)
                 {
                     var l = new line();
                     l.x1 = state.open_line_x;
@@ -198,7 +263,8 @@ namespace wrenk
             x /= state.zoom;
             y /= state.zoom;
 
-
+            x = Math.Floor(x / state.snap) * state.snap;
+            y = Math.Floor(y / state.snap) * state.snap;
             return new PointF((float)x, (float)y);
         }
         public SizeF tsz(double w, double h)
@@ -207,11 +273,12 @@ namespace wrenk
         }
         private void RefTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            Bitmap nbm = new Bitmap(this.Width, this.Height);
             try
             {
                 {
-                    bm = new Bitmap(this.Width, this.Height);
-                    var g = Graphics.FromImage(bm);
+                   
+                    var g = Graphics.FromImage(nbm);
                     g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 
                     var bg_color = Color.AntiqueWhite;
@@ -231,18 +298,53 @@ namespace wrenk
                                 PointF p1 = this.tpt(line.x1, line.y1);
                                 PointF p2 = this.tpt(line.x2, line.y2);
 
-                                g.DrawLine(this.pending_line_pen, p1, p2);
+                                g.DrawLine(this.base_line_pen, p1, p2);
+
+                                if(line.selected)
+                                {
+                                    g.DrawLine(this.selected_line_pen, p1, p2);
+                                }
+
                             }
                         }
 
                         {
                             //draw active line
-                            if (state.leftclick_state == state.LS_STATE_DEFINING_LINE)
+                            if (state.input_state == state.LS_STATE_DEFINING_LINE)
                             {
                                 PointF p1 = this.tpt(state.open_line_x, state.open_line_y);
                                 PointF p2 = this.tpt(state.mx,state.my);
 
                                 g.DrawLine(this.pending_line_pen, p1, p2);
+                            }
+                        }
+
+                        {
+                            //draw selection
+                            if(state.input_state == state.RS_STATE_SELECTING)
+                            {
+                               
+                                PointF p1 = this.tpt(state.open_sel_x, state.open_sel_y);
+                                PointF p2 = this.tpt(state.mx, state.my);
+
+                                
+                                if(p1.X<p2.X)
+                                {
+                                    float t = p1.X;
+                                    p1.X = p2.X;
+                                    p2.X = t;
+                                }
+                                if(p1.Y < p2.Y)
+                                {
+                                    float t = p1.Y;
+                                    p1.Y = p2.Y;
+                                    p2.Y = t;
+                                }
+
+                                float w = p1.X - p2.X;
+                                float h = p1.Y - p2.Y;
+                                g.DrawRectangle(this.sel_pen,p2.X,p2.Y,w,h);
+
                             }
                         }
                         {
@@ -265,10 +367,12 @@ namespace wrenk
                                 g.DrawString(s, f, Brushes.Black, 10, 10 + (i*10));
                                 i++;
                             }
+
+                            g.DrawString(state.input_state.ToString(), f, Brushes.Black, 10, 130);
                         }
                     }
                 }
-                this.BackgroundImage = bm;
+                this.BackgroundImage = nbm;
             }
             catch (Exception ex) { }
         }
