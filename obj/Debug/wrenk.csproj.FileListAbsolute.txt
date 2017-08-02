@@ -5,4 +5,5 @@ c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.Propert
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.csproj.GenerateResource.Cache
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.exe
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.pdb
-c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.model.resources
+c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.csprojResolveAssemblyReference.cache
+c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.line.resources
