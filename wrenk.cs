@@ -17,7 +17,7 @@ namespace wrenk
         public double x1, y1, x2, y2;
         public bool physics_occluder = true;
         public bool light_occluder = true;
-        public bool decoration = true;
+        public bool decoration = false;
         public bool selected = false;
     }
 
@@ -55,7 +55,9 @@ namespace wrenk
         static public double open_line_x = 0.0;
         static public double open_line_y = 0.0;
 
-        static public double snap = 5.0;
+        static public double snap = 4.0;
+        static public bool modifier = false;
+        static public bool accumulator = false;
 
     }
    
@@ -68,6 +70,8 @@ namespace wrenk
         private System.Drawing.Pen pending_line_pen;
         private System.Drawing.Pen base_line_pen;
         private System.Drawing.Pen selected_line_pen;
+
+
         private System.Drawing.Pen sel_pen;
         private List<string> layernames = new List<string>();
         public viewForm()
@@ -87,7 +91,9 @@ namespace wrenk
             this.pending_line_pen = new System.Drawing.Pen(Color.OliveDrab, 1.5f);
             this.pending_line_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
             this.base_line_pen = new System.Drawing.Pen(Color.CadetBlue, 1.9f);
-            this.selected_line_pen = new System.Drawing.Pen(Color.Red, 2.0f);
+            this.selected_line_pen = new System.Drawing.Pen(Color.LightCoral, 8.0f);
+
+
 
             this.sel_pen = new System.Drawing.Pen(Color.CornflowerBlue, 0.5f);
             this.sel_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
@@ -98,6 +104,8 @@ namespace wrenk
             this.MouseMove += ViewForm_MouseMove;
             this.MouseWheel += ViewForm_MouseWheel;
             this.KeyPress += ViewForm_KeyPress;
+            this.KeyDown += ViewForm_KeyDown;
+            this.KeyUp += ViewForm_KeyUp;
             
 
             this.Cursor = Cursors.Cross;
@@ -110,8 +118,45 @@ namespace wrenk
 
         }
 
+   
+
+        private void ViewForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Alt) {
+                state.modifier = true;
+            }
+
+            if(e.Shift)
+            {
+                state.accumulator = true;
+            }
+            
+        }
+
+        private void ViewForm_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyData == Keys.Menu)
+            {
+                state.modifier = false;
+            }
+            if(! (e.KeyData == Keys.Shift))
+            {
+                state.accumulator = false;
+            }
+        }
+
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='=')
+            {
+                state.snap += 2.0;
+            }
+
+            if(e.KeyChar=='-')
+            {
+                if(state.snap>2.0)
+                state.snap -= 2.0;
+            }
             int offs = 0;
             if (e.KeyChar == ']') offs = 1;
             if (e.KeyChar == '[') offs = -1;
@@ -124,6 +169,49 @@ namespace wrenk
                 if(e.KeyChar=='x')
                 {
                     model.lines = model.lines.Where(x => x.selected == false).ToList();
+                }
+                var selected = model.lines.Where(x => x.selected == true).ToList();
+                if (e.KeyChar=='P')
+                {
+                    foreach(var line in selected)
+                    {
+                        line.physics_occluder = true;
+                    }
+                }
+                if (e.KeyChar == 'p')
+                {
+                    foreach (var line in selected)
+                    {
+                        line.physics_occluder = false;
+                    }
+                }
+                if (e.KeyChar == 'L')
+                {
+                    foreach (var line in selected)
+                    {
+                        line.light_occluder = true;
+                    }
+                }
+                if (e.KeyChar == 'l')
+                {
+                    foreach (var line in selected)
+                    {
+                        line.light_occluder= false;
+                    }
+                }
+                if (e.KeyChar == 'D')
+                {
+                    foreach (var line in selected)
+                    {
+                        line.decoration = true;
+                    }
+                }
+                if (e.KeyChar == 'd')
+                {
+                    foreach (var line in selected)
+                    {
+                        line.decoration = false;
+                    }
                 }
             }
 
@@ -156,15 +244,31 @@ namespace wrenk
 
                 foreach( var line in model.lines )
                 {
-                    if(
-                       (line.x1 > lx) && (line.x1 < gx) && (line.x2 > lx) && (line.x2 < gx) &&
-                        (line.y1 > ly) && (line.y1 < gy) && (line.y2 > ly) && (line.y2 < gy)
-                        ) {
-                        line.selected = true;
 
+                    if (state.modifier == false)
+                    {
+                        if (
+                           (line.x1 > lx) && (line.x1 < gx) && (line.x2 > lx) && (line.x2 < gx) &&
+                            (line.y1 > ly) && (line.y1 < gy) && (line.y2 > ly) && (line.y2 < gy)
+                            )
+                        {
+                            line.selected = true;
+
+                        }
+                        else
+                        {
+                            if (!state.accumulator)
+                            {
+                                line.selected = false;
+                            }
+                        }
                     } else
                     {
-                        line.selected = false;
+                        if ((line.x1 > lx) && (line.x1 < gx) && (line.y1 > ly) && (line.y1 < gy))
+                            line.selected = false;
+
+                        if ((line.x2 > lx) && (line.x2 < gx) && (line.y2 > ly) && (line.y2 < gy))
+                            line.selected = false;
                     }
                 }
             }
@@ -207,6 +311,10 @@ namespace wrenk
                     state.open_line_x = state.mx;
                     state.open_line_y = state.my;
 
+                    foreach(var line in model.lines)
+                    {
+                        line.selected = false;
+                    }
                     state.input_state = state.LS_STATE_DEFINING_LINE;
                 }
 
@@ -217,6 +325,7 @@ namespace wrenk
                     l.y1 = state.open_line_y;
                     l.x2 = state.mx;
                     l.y2 = state.my;
+                    l.selected = true;
                     model.lines.Add(l);
 
                     state.open_line_x = state.mx;
@@ -298,12 +407,44 @@ namespace wrenk
                                 PointF p1 = this.tpt(line.x1, line.y1);
                                 PointF p2 = this.tpt(line.x2, line.y2);
 
-                                g.DrawLine(this.base_line_pen, p1, p2);
-
                                 if(line.selected)
                                 {
                                     g.DrawLine(this.selected_line_pen, p1, p2);
                                 }
+
+                                Pen p = new System.Drawing.Pen(Color.LightGray, 2.5f);
+                                p.DashStyle = System.Drawing.Drawing2D.DashStyle.DashDotDot;
+                                
+                                if(line.light_occluder && !line.physics_occluder)
+                                {
+                                    p.Color = Color.Black;
+                                    p.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
+                                }
+
+                                if(line.physics_occluder && !line.light_occluder)
+                                {
+
+                                    p.Color = Color.Black;
+                                    p.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                                }
+
+                                if (line.physics_occluder && line.light_occluder)
+                                {
+                                    p.Color = Color.Black;
+                                    p.Width = 4.0f;
+                                    p.DashStyle = System.Drawing.Drawing2D.DashStyle.Solid;
+                                }
+
+                                if(line.decoration)
+                                {
+                                    p.Color = Color.DarkGreen;
+                                }
+                                g.DrawLine(p, p1, p2);
+
+                                
+
+                               
+                              
 
                             }
                         }
