@@ -65,7 +65,7 @@ namespace wrenk
     class viewForm : Form
     {
         private Bitmap bm;
-        private System.Timers.Timer refTimer;
+        private System.Windows.Forms.Timer refTimer;
         private System.Drawing.Pen area_pen;
         private System.Drawing.Pen pending_line_pen;
         private System.Drawing.Pen base_line_pen;
@@ -77,10 +77,10 @@ namespace wrenk
         public viewForm()
         {
             this.DoubleBuffered = true;
-            this.refTimer = new System.Timers.Timer(45);
-            this.refTimer.Elapsed += RefTimer_Elapsed;
+            this.refTimer = new System.Windows.Forms.Timer();
+            this.refTimer.Interval = 30;
+            this.refTimer.Tick += RefTimer_Tick;
             this.refTimer.Start();
-            this.FormClosed += ViewForm_FormClosed;
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.Width = (int)(960 * 1.5);
             this.Height = (int)(540 * 1.5);
@@ -118,7 +118,10 @@ namespace wrenk
 
         }
 
-   
+        private void RefTimer_Tick(object sender, EventArgs e)
+        {
+            this.redraw();
+        }
 
         private void ViewForm_KeyDown(object sender, KeyEventArgs e)
         {
@@ -334,12 +337,6 @@ namespace wrenk
             }
         }
 
-        private void ViewForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            this.refTimer.Elapsed -= RefTimer_Elapsed;
-       
-        }
-
         public PointF tpt(double x, double y)
         {
             double cx = this.Width / 2.0;
@@ -380,7 +377,7 @@ namespace wrenk
         {
             return new SizeF((float)(w * state.zoom), (float)(h * state.zoom));
         }
-        private void RefTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void redraw()
         {
             Bitmap nbm = new Bitmap(this.Width, this.Height);
             try
