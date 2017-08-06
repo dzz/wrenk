@@ -12,9 +12,22 @@ namespace wrenk
 {
     public partial class propeditor : Form
     {
+        public PictureBox PictureBox;
+        public ComboBox KeyBox;
+
+        public prop selected = null;
+
+        public void synch(prop p)
+        {
+            this.KeyBox.SelectedIndex = state.prop_images.IndexOf(p.image);
+            this.pictureBox1.Image = p.image;
+            this.selected = p;
+        }
         public propeditor()
         {
             InitializeComponent();
+            PictureBox = this.pictureBox1;
+            KeyBox = this.comboBox1;
             this.comboBox1.Items.AddRange(state.prop_names.ToArray());
             this.comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             this.AutoSize = true;
@@ -25,6 +38,12 @@ namespace wrenk
         {
             this.pictureBox1.Image = state.prop_images[this.comboBox1.SelectedIndex];
             this.pictureBox1.Size = pictureBox1.Image.Size;
+
+            if(this.selected != null)
+            {
+                this.selected.image = this.pictureBox1.Image;
+                this.selected.image_key = (String)this.comboBox1.SelectedItem;
+            }
 
         }
 

@@ -27,12 +27,22 @@ namespace wrenk
         public double x, y;
     }
 
+    public class prop
+    {
+        public string image_key = "";
+        public Image image = null;
+        public double x, y;
+        public double w, h;
+        public double r;
+    }
+
     class model
     {
         static public double width = 200;
         static public double height = 200;
         static public List<line> lines = new List<line>();
         static public List<obj> objs = new List<obj>();
+        static public List<prop> props = new List<prop>();
     }
 
     public class state
@@ -135,7 +145,7 @@ namespace wrenk
             {
                 var img = Image.FromFile(png);
                 state.prop_images.Add(img);
-                state.prop_names.Add(png);
+                state.prop_names.Add(png.Split('\\').Last().Replace(".png",""));
             }
 
             //MessageBox.Show("Loaded " + state.prop_images.Count.ToString() + " images");
@@ -156,8 +166,26 @@ namespace wrenk
                     o.x = state.mx;
                     o.y = state.my;
                     model.objs.Add(o);
-
                     OE.synch(o);
+                }
+
+                if(state.layer_index == state.LAYER_PROPS)
+                {
+                    var p = new prop();
+                    p.image_key = (String)PE.KeyBox.SelectedItem;
+                    p.image = PE.PictureBox.Image;
+                    p.x = state.mx;
+                    p.y = state.my;
+                    p.w = 100;
+                    p.h = 100;
+
+                    if(PE.selected != null)
+                    {
+                        p.w = PE.selected.w;
+                        p.h = PE.selected.h;
+                    }
+                    model.props.Add(p);
+                    PE.synch(p);
                 }
             }
         }
@@ -283,8 +311,23 @@ namespace wrenk
 
         private void ViewForm_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (e.Delta > 0) { state.zoom *= 1.1; }
-            if(e.Delta<0) { state.zoom *= 0.9; }
+            if (!state.modifier)
+            {
+                if (e.Delta > 0) { state.zoom *= 1.1; }
+                if (e.Delta < 0) { state.zoom *= 0.9; }
+            }
+            else
+            {
+
+                if(state.layer_index == state.LAYER_PROPS)
+                {
+                    if(PE.selected !=null)
+                    {
+                        if (e.Delta > 0) { PE.selected.w *= 1.05; PE.selected.h *= 1.05; }
+                        if (e.Delta < 0) { PE.selected.w *= 0.95; PE.selected.h *= 0.95; }
+                    }
+                }
+            }
             
         }
 
@@ -377,6 +420,15 @@ namespace wrenk
                         this.OE.selected.y = state.my;
                     }
                 }
+
+                if (state.layer_index == state.LAYER_PROPS)
+                {
+                    if (this.PE.selected != null)
+                    {
+                        this.PE.selected.x = state.mx;
+                        this.PE.selected.y = state.my;
+                    }
+                }
             }
 
             if(e.Button == MouseButtons.Left)
@@ -419,6 +471,24 @@ namespace wrenk
                         {
                             this.OE.selected = null;
                             this.OE.synch(o);
+                            break;
+                        }
+                    }
+                }
+
+                if (state.layer_index == state.LAYER_PROPS)
+                {
+                    foreach (var p in model.props)
+                    {
+                        if( 
+                             ( state.mx > (p.x-p.w) ) &&
+                             ( state.mx < (p.x+p.w) ) &&
+                             ( state.my > (p.y - p.h)) &&
+                             ( state.my < (p.y + p.h)) ) 
+
+                        {
+                            this.PE.selected = null;
+                            this.PE.synch(p);
                             break;
                         }
                     }
@@ -471,8 +541,11 @@ namespace wrenk
         {
             return new SizeF((float)(w * state.zoom), (float)(h * state.zoom));
         }
+
+        float t = 0.0f;
         private void redraw()
         {
+            t = t + 0.1f;
             Bitmap nbm = new Bitmap(this.Width, this.Height);
             try
             {
@@ -490,6 +563,37 @@ namespace wrenk
                             PointF p = this.tpt(0.0 - model.width, 0.0 - model.height);
                             SizeF s = this.tsz(model.width * 2, model.height * 2);
                             g.DrawRectangle(this.area_pen, p.X, p.Y, s.Width, s.Height);
+                        }
+                        {
+                            //draw props
+                            foreach(var p in model.props)
+                            {
+                                PointF pp = this.tpt(p.x, p.y);
+                                SizeF s = this.tsz(p.w, p.h);
+
+                                //g.RotateTransform(t);
+                                
+                                
+                                //g.DrawImage(p.image, pp.X - s.Width, pp.Y - s.Height, s.Width * 2, s.Height * 2);
+                                
+                                g.TranslateTransform(pp.X, pp.Y);
+                                g.RotateTransform(45.0f);
+                                g.TranslateTransform(-s.Width, -s.Height);
+                                g.DrawImage(p.image, 0.0f, 0.0f, s.Width * 2, s.Height * 2);
+
+                               
+                                g.ResetTransform();
+
+                                
+
+                                if(p == PE.selected)
+                                {
+                                    float w = s.Width * 1.03f;
+                                    float h = s.Height * 1.03f;
+                                    g.DrawRectangle(Pens.Red, pp.X - w, pp.Y - h, w * 2, h * 2);
+                                }
+                                
+                            }
                         }
                         {
                             //draw lines
@@ -622,7 +726,9 @@ namespace wrenk
                             g.DrawLine( Pens.White, 0, p.Y, (float)this.Width, p.Y );
                         }
                     }
+                    g.Dispose();
                 }
+               
                 this.BackgroundImage = nbm;
             }
             catch (Exception ex) { }
