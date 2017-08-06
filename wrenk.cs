@@ -21,11 +21,18 @@ namespace wrenk
         public bool selected = false;
     }
 
+    public class obj {
+        public string key = "";
+        public string json = "{}";
+        public double x, y;
+    }
+
     class model
     {
         static public double width = 200;
         static public double height = 200;
         static public List<line> lines = new List<line>();
+        static public List<obj> objs = new List<obj>();
     }
 
     class state
@@ -70,7 +77,7 @@ namespace wrenk
         private System.Drawing.Pen pending_line_pen;
         private System.Drawing.Pen base_line_pen;
         private System.Drawing.Pen selected_line_pen;
-
+        private objeditor OE = new objeditor();
 
         private System.Drawing.Pen sel_pen;
         private List<string> layernames = new List<string>();
@@ -98,8 +105,9 @@ namespace wrenk
             this.sel_pen = new System.Drawing.Pen(Color.CornflowerBlue, 0.5f);
             this.sel_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
 
-            
 
+
+            this.MouseDoubleClick += ViewForm_MouseDoubleClick;
             this.MouseClick += ViewForm_MouseClick;
             this.MouseMove += ViewForm_MouseMove;
             this.MouseWheel += ViewForm_MouseWheel;
@@ -116,6 +124,24 @@ namespace wrenk
             layernames.Add("photon");
             layernames.Add("light");
 
+        }
+
+        private void ViewForm_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                if (state.layer_index == state.LAYER_OBJECTS)
+                {
+                    var o = new obj();
+                    o.key = (String)OE.getKeySelector().SelectedItem;
+                    o.json = "{}";
+                    o.x = state.mx;
+                    o.y = state.my;
+                    model.objs.Add(o);
+
+                    OE.synch(o);
+                }
+            }
         }
 
         private void RefTimer_Tick(object sender, EventArgs e)
@@ -218,6 +244,15 @@ namespace wrenk
                 }
             }
 
+            if(state.layer_index == state.LAYER_OBJECTS)
+            {
+           
+                OE.Show();
+            } else
+            {
+                OE.Hide();
+            }
+
         }
 
         private void ViewForm_MouseWheel(object sender, MouseEventArgs e)
@@ -287,52 +322,80 @@ namespace wrenk
 
             if (e.Button == MouseButtons.Right)
             {
-                if(state.input_state == state.LS_STATE_OPEN)
+                if (state.layer_index == state.LAYER_LINES)
                 {
+                    if (state.input_state == state.LS_STATE_OPEN)
+                    {
 
-                    state.input_state = state.RS_STATE_SELECTING;
-                    state.open_sel_x = state.mx;
-                    state.open_sel_y = state.my;
+                        state.input_state = state.RS_STATE_SELECTING;
+                        state.open_sel_x = state.mx;
+                        state.open_sel_y = state.my;
+                    }
+                    else
+                    if (state.input_state == state.RS_STATE_SELECTING)
+                    {
+                        this.commitSelection();
+                        state.input_state = state.LS_STATE_OPEN;
+                    }
+                    else
+                    if (state.input_state == state.LS_STATE_DEFINING_LINE)
+                    {
+                        state.input_state = state.LS_STATE_OPEN;
+                    }
                 }
-                else 
-                if(state.input_state == state.RS_STATE_SELECTING)
+
+                if( state.layer_index == state.LAYER_OBJECTS)
                 {
-                    this.commitSelection();
-                    state.input_state = state.LS_STATE_OPEN;
-                }
-                else
-                if (state.input_state == state.LS_STATE_DEFINING_LINE)
-                {
-                    state.input_state = state.LS_STATE_OPEN;
+                    if(this.OE.selected != null)
+                    {
+                        this.OE.selected.x = state.mx;
+                        this.OE.selected.y = state.my;
+                    }
                 }
             }
 
             if(e.Button == MouseButtons.Left)
             {
-                if (state.input_state == state.LS_STATE_OPEN && state.layer_index == 0)
+                if (state.layer_index == state.LAYER_LINES)
                 {
-                    state.open_line_x = state.mx;
-                    state.open_line_y = state.my;
-
-                    foreach(var line in model.lines)
+                    if (state.input_state == state.LS_STATE_OPEN && state.layer_index == 0)
                     {
-                        line.selected = false;
+                        state.open_line_x = state.mx;
+                        state.open_line_y = state.my;
+
+                        foreach (var line in model.lines)
+                        {
+                            line.selected = false;
+                        }
+                        state.input_state = state.LS_STATE_DEFINING_LINE;
                     }
-                    state.input_state = state.LS_STATE_DEFINING_LINE;
+
+                    if (state.input_state == state.LS_STATE_DEFINING_LINE)
+                    {
+                        var l = new line();
+                        l.x1 = state.open_line_x;
+                        l.y1 = state.open_line_y;
+                        l.x2 = state.mx;
+                        l.y2 = state.my;
+                        l.selected = true;
+                        model.lines.Add(l);
+
+                        state.open_line_x = state.mx;
+                        state.open_line_y = state.my;
+                    }
                 }
-
-                if(state.input_state == state.LS_STATE_DEFINING_LINE)
+                if(state.layer_index == state.LAYER_OBJECTS)
                 {
-                    var l = new line();
-                    l.x1 = state.open_line_x;
-                    l.y1 = state.open_line_y;
-                    l.x2 = state.mx;
-                    l.y2 = state.my;
-                    l.selected = true;
-                    model.lines.Add(l);
-
-                    state.open_line_x = state.mx;
-                    state.open_line_y = state.my;
+                    foreach(var o in model.objs)
+                    {
+                        var dx = state.mx - o.x;
+                        var dy = state.my - o.y;
+                        if((dx*dx)+(dy*dy) < 20)
+                        {
+                            this.OE.synch(o);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -369,8 +432,13 @@ namespace wrenk
             x /= state.zoom;
             y /= state.zoom;
 
-            x = Math.Floor(x / state.snap) * state.snap;
-            y = Math.Floor(y / state.snap) * state.snap;
+            double effective_snap = state.snap;
+
+            if(state.input_state == state.RS_STATE_SELECTING) {
+                effective_snap /= 2;
+            }
+            x = Math.Floor(x / effective_snap) * effective_snap;
+            y = Math.Floor(y / effective_snap) * effective_snap;
             return new PointF((float)x, (float)y);
         }
         public SizeF tsz(double w, double h)
@@ -385,7 +453,7 @@ namespace wrenk
                 {
                    
                     var g = Graphics.FromImage(nbm);
-                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
                     var bg_color = Color.AntiqueWhite;
                     {
@@ -506,7 +574,32 @@ namespace wrenk
                                 i++;
                             }
 
-                            g.DrawString(state.input_state.ToString(), f, Brushes.Black, 10, 130);
+                            g.DrawString("input state:" + state.input_state.ToString(), f, Brushes.Black, 10, 80);
+                            g.DrawString("snap:" + state.snap.ToString(), f, Brushes.Black, 10, 90);
+                        }
+
+                        {
+                            //draw objects
+                            foreach(var o in model.objs)
+                            {
+                                Font f = new Font(FontFamily.GenericMonospace, 8);
+                                PointF p = this.tpt(o.x, o.y);
+                                g.DrawRectangle(Pens.DarkCyan, p.X - 10, p.Y - 10, 20, 20);
+                                g.DrawString(o.key, f, Brushes.DarkBlue, p.X -10 , p.Y - 10);
+
+                                if(o == this.OE.selected)
+                                {
+                                    g.DrawRectangle(Pens.DarkMagenta, p.X - 13, p.Y - 13, 26, 26);
+                                }
+                            }
+                        }
+
+                        {
+                            //draw reticle
+                            PointF p = this.tpt(state.mx, state.my);
+                
+                            g.DrawLine( Pens.White, p.X, 0, p.X, (float)this.Height );
+                            g.DrawLine( Pens.White, 0, p.Y, (float)this.Width, p.Y );
                         }
                     }
                 }
