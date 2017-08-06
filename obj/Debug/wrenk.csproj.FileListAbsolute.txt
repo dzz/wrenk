@@ -8,3 +8,4 @@ c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.pdb
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.csprojResolveAssemblyReference.cache
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.line.resources
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.objeditor.resources
+c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.propeditor.resources

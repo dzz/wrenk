@@ -35,7 +35,7 @@ namespace wrenk
         static public List<obj> objs = new List<obj>();
     }
 
-    class state
+    public class state
     {
         static public double mx = 0.0;
         static public double my = 0.0;
@@ -66,6 +66,9 @@ namespace wrenk
         static public bool modifier = false;
         static public bool accumulator = false;
 
+        static public List<Image> prop_images = new List<Image>();
+        static public List<String> prop_names = new List<String>();
+
     }
    
 
@@ -78,6 +81,7 @@ namespace wrenk
         private System.Drawing.Pen base_line_pen;
         private System.Drawing.Pen selected_line_pen;
         private objeditor OE = new objeditor();
+        private propeditor PE; 
 
         private System.Drawing.Pen sel_pen;
         private List<string> layernames = new List<string>();
@@ -100,12 +104,8 @@ namespace wrenk
             this.base_line_pen = new System.Drawing.Pen(Color.CadetBlue, 1.9f);
             this.selected_line_pen = new System.Drawing.Pen(Color.LightCoral, 8.0f);
 
-
-
             this.sel_pen = new System.Drawing.Pen(Color.CornflowerBlue, 0.5f);
             this.sel_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
-
-
 
             this.MouseDoubleClick += ViewForm_MouseDoubleClick;
             this.MouseClick += ViewForm_MouseClick;
@@ -123,6 +123,24 @@ namespace wrenk
             layernames.Add("prop");
             layernames.Add("photon");
             layernames.Add("light");
+
+            //var fbd = new FolderBrowserDialog();
+            //fbd.ShowDialog();
+            //var path = fbd.SelectedPath;
+
+            var path = "c:\\users\\dzz\\kthuune\\resources\\forest\\";
+
+            var pngs = System.IO.Directory.GetFiles(path, "*.png");
+            foreach(var png in pngs)
+            {
+                var img = Image.FromFile(png);
+                state.prop_images.Add(img);
+                state.prop_names.Add(png);
+            }
+
+            //MessageBox.Show("Loaded " + state.prop_images.Count.ToString() + " images");
+            PE = new propeditor();
+
 
         }
 
@@ -246,11 +264,19 @@ namespace wrenk
 
             if(state.layer_index == state.LAYER_OBJECTS)
             {
-           
                 OE.Show();
             } else
             {
                 OE.Hide();
+            }
+
+            if (state.layer_index == state.LAYER_PROPS)
+            {
+                PE.Show();
+            }
+            else
+            {
+                PE.Hide();
             }
 
         }
@@ -291,7 +317,6 @@ namespace wrenk
                             )
                         {
                             line.selected = true;
-
                         }
                         else
                         {
@@ -506,12 +531,6 @@ namespace wrenk
                                     p.Color = Color.DarkGreen;
                                 }
                                 g.DrawLine(p, p1, p2);
-
-                                
-
-                               
-                              
-
                             }
                         }
 
@@ -583,10 +602,10 @@ namespace wrenk
                             //draw objects
                             foreach(var o in model.objs)
                             {
-                                Font f = new Font(FontFamily.GenericMonospace, 8);
+                                Font f = new Font(FontFamily.GenericMonospace, 6);
                                 PointF p = this.tpt(o.x, o.y);
                                 g.DrawRectangle(Pens.DarkCyan, p.X - 10, p.Y - 10, 20, 20);
-                                g.DrawString(o.key, f, Brushes.DarkBlue, p.X -20 , p.Y + 25);
+                                g.DrawString(o.key, f, Brushes.DarkBlue, p.X -20 , p.Y + 23);
 
                                 if(o == this.OE.selected)
                                 {

@@ -50,6 +50,12 @@
     <Compile Include="objeditor.Designer.cs">
       <DependentUpon>objeditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="propeditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="propeditor.Designer.cs">
+      <DependentUpon>propeditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="wrenk.cs" />
     <Compile Include="wrenk.Designer.cs">
       <DependentUpon>wrenk.cs</DependentUpon>
@@ -58,6 +64,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="objeditor.resx">
       <DependentUpon>objeditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="propeditor.resx">
+      <DependentUpon>propeditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="wrenk.resx">
       <DependentUpon>wrenk.cs</DependentUpon>
