@@ -392,6 +392,7 @@ namespace wrenk
                         var dy = state.my - o.y;
                         if((dx*dx)+(dy*dy) < 20)
                         {
+                            this.OE.selected = null;
                             this.OE.synch(o);
                             break;
                         }
@@ -585,7 +586,7 @@ namespace wrenk
                                 Font f = new Font(FontFamily.GenericMonospace, 8);
                                 PointF p = this.tpt(o.x, o.y);
                                 g.DrawRectangle(Pens.DarkCyan, p.X - 10, p.Y - 10, 20, 20);
-                                g.DrawString(o.key, f, Brushes.DarkBlue, p.X -10 , p.Y - 10);
+                                g.DrawString(o.key, f, Brushes.DarkBlue, p.X -20 , p.Y + 25);
 
                                 if(o == this.OE.selected)
                                 {
