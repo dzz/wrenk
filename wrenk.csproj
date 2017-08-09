@@ -44,6 +44,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="modelprops.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="modelprops.Designer.cs">
+      <DependentUpon>modelprops.cs</DependentUpon>
+    </Compile>
     <Compile Include="objeditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -62,6 +68,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="modelprops.resx">
+      <DependentUpon>modelprops.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="objeditor.resx">
       <DependentUpon>objeditor.cs</DependentUpon>
     </EmbeddedResource>

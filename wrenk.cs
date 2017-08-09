@@ -12,7 +12,7 @@ namespace wrenk
 {
 
 
-    class line
+    public class line
     {
         public double x1, y1, x2, y2;
         public bool physics_occluder = true;
@@ -36,7 +36,7 @@ namespace wrenk
         public double r;
     }
 
-    class model
+    public class model
     {
         static public double width = 200;
         static public double height = 200;
@@ -178,11 +178,13 @@ namespace wrenk
                     p.y = state.my;
                     p.w = 100;
                     p.h = 100;
+                    p.r = 0;
 
                     if(PE.selected != null)
                     {
                         p.w = PE.selected.w;
                         p.h = PE.selected.h;
+                        p.r = PE.selected.r;
                     }
                     model.props.Add(p);
                     PE.synch(p);
@@ -220,8 +222,21 @@ namespace wrenk
             }
         }
 
+        public modelprops MP = new modelprops();
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='`')
+            {
+                if (!MP.Visible)
+                {
+
+                    MP.synch();
+                    MP.Show();
+                } else
+                {
+                    MP.Hide();
+                }
+            }
             if(e.KeyChar=='=')
             {
                 state.snap += 2.0;
@@ -235,6 +250,12 @@ namespace wrenk
             int offs = 0;
             if (e.KeyChar == ']') offs = 1;
             if (e.KeyChar == '[') offs = -1;
+            if(offs!=0)
+            {
+                this.PE.selected = null;
+                this.OE.selected = null;
+
+            }
                 state.layer_index = (state.layer_index+offs) % layernames.Count;
             if (state.layer_index < 0) state.layer_index = layernames.Count - 1;
             state.input_state = state.LS_STATE_OPEN;
@@ -311,20 +332,28 @@ namespace wrenk
 
         private void ViewForm_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (!state.modifier)
+            if ( (!state.modifier) && (!state.accumulator))
             {
                 if (e.Delta > 0) { state.zoom *= 1.1; }
                 if (e.Delta < 0) { state.zoom *= 0.9; }
             }
-            else
+            else 
             {
 
-                if(state.layer_index == state.LAYER_PROPS)
+                if(state.layer_index == state.LAYER_PROPS && state.modifier)
                 {
                     if(PE.selected !=null)
                     {
                         if (e.Delta > 0) { PE.selected.w *= 1.05; PE.selected.h *= 1.05; }
                         if (e.Delta < 0) { PE.selected.w *= 0.95; PE.selected.h *= 0.95; }
+                    }
+                }
+                if (state.layer_index == state.LAYER_PROPS && state.accumulator)
+                {
+                    if (PE.selected != null)
+                    {
+                        if (e.Delta > 0) { PE.selected.r -= 2.0f; };
+                        if (e.Delta < 0) { PE.selected.r += 2.0f; }
                     }
                 }
             }
@@ -478,6 +507,7 @@ namespace wrenk
 
                 if (state.layer_index == state.LAYER_PROPS)
                 {
+                    this.PE.selected = null;
                     foreach (var p in model.props)
                     {
                         if( 
@@ -566,6 +596,8 @@ namespace wrenk
                         }
                         {
                             //draw props
+                            model.props = model.props.OrderBy(o => o.y).ToList();
+                                
                             foreach(var p in model.props)
                             {
                                 PointF pp = this.tpt(p.x, p.y);
@@ -577,7 +609,7 @@ namespace wrenk
                                 //g.DrawImage(p.image, pp.X - s.Width, pp.Y - s.Height, s.Width * 2, s.Height * 2);
                                 
                                 g.TranslateTransform(pp.X, pp.Y);
-                                g.RotateTransform(45.0f);
+                                g.RotateTransform((float)p.r);
                                 g.TranslateTransform(-s.Width, -s.Height);
                                 g.DrawImage(p.image, 0.0f, 0.0f, s.Width * 2, s.Height * 2);
 

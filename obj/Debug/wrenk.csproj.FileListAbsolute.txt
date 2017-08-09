@@ -9,3 +9,4 @@ c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.csprojR
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.line.resources
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.objeditor.resources
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.propeditor.resources
+C:\Users\dzz\Documents\Visual Studio 2017\Projects\wrenk\obj\Debug\wrenk.modelprops.resources
