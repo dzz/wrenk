@@ -52,7 +52,7 @@ namespace wrenk
         {
             if(this.selected != null)
             {
-                this.selected.key = (String)this.keySelector.SelectedItem;
+                this.selected.key = (String)this.keySelector.Text;
             }
         }
 

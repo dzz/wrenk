@@ -34,7 +34,6 @@
             // 
             // keySelector
             // 
-            this.keySelector.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.keySelector.FormattingEnabled = true;
             this.keySelector.Items.AddRange(new object[] {
             "elder",

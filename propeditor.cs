@@ -22,6 +22,9 @@ namespace wrenk
             this.KeyBox.SelectedIndex = state.prop_images.IndexOf(p.image);
             this.pictureBox1.Image = p.image;
             this.selected = p;
+            if (this.selected.type == 0) radioButton1.Checked = true;
+            if (this.selected.type == 1) radioButton2.Checked = true;
+            if (this.selected.type == 2) radioButton3.Checked = true;
         }
         public propeditor()
         {
@@ -32,6 +35,30 @@ namespace wrenk
             this.comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             this.AutoSize = true;
             this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            this.radioButton1.CheckedChanged += RadioButton1_CheckedChanged;
+            this.radioButton2.CheckedChanged += RadioButton2_CheckedChanged;
+            this.radioButton3.CheckedChanged += RadioButton3_CheckedChanged;
+
+        }
+
+        private void RadioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            if(this.radioButton1.Checked)
+            if (this.selected != null) this.selected.type = 0;
+        }
+
+        private void RadioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+            if(this.radioButton2.Checked)
+            if (this.selected != null) this.selected.type = 1;
+        }
+
+
+        private void RadioButton3_CheckedChanged(object sender, EventArgs e)
+        {
+            if(this.radioButton3.Checked)
+            if (this.selected != null) this.selected.type = 2;
         }
 
         private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -63,5 +90,9 @@ namespace wrenk
             }
         }
 
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

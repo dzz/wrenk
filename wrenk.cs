@@ -34,6 +34,14 @@ namespace wrenk
         public double x, y;
         public double w, h;
         public double r;
+        public int type = 0;
+    }
+
+    public class photon
+    {
+        public double r, g, b;
+        public double x, y;
+        public double w, h;
     }
 
     public class model
@@ -57,8 +65,7 @@ namespace wrenk
         static public int LAYER_LINES = 0;
         static public int LAYER_OBJECTS = 1;
         static public int LAYER_PROPS = 2;
-        static public int LAYER_PHOTONS = 3;
-        static public int LAYER_LIGHTS = 4;
+        //static public int LAYER_PHOTONS = 3;
 
         static public int input_state = 0;
 
@@ -131,8 +138,7 @@ namespace wrenk
             layernames.Add("line");
             layernames.Add("object");
             layernames.Add("prop");
-            layernames.Add("photon");
-            layernames.Add("light");
+            //layernames.Add("photon");
 
             //var fbd = new FolderBrowserDialog();
             //fbd.ShowDialog();
@@ -161,7 +167,7 @@ namespace wrenk
                 if (state.layer_index == state.LAYER_OBJECTS)
                 {
                     var o = new obj();
-                    o.key = (String)OE.getKeySelector().SelectedItem;
+                    o.key = (String)OE.getKeySelector().Text;
                     o.json = "{}";
                     o.x = state.mx;
                     o.y = state.my;
@@ -223,8 +229,155 @@ namespace wrenk
         }
 
         public modelprops MP = new modelprops();
+
+        public void saveModel()
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+            if( sfd.ShowDialog() == DialogResult.OK )
+            {
+                List<string> data = new List<string>();
+
+                data.Add("MODEL");
+                data.Add(model.width.ToString());
+                data.Add(model.height.ToString());
+                foreach( var line in model.lines)
+                {
+                    data.Add("LINE");
+                    data.Add(line.x1.ToString());
+                    data.Add(line.y1.ToString());
+                    data.Add(line.x2.ToString());
+                    data.Add(line.y2.ToString());
+                    data.Add(line.light_occluder.ToString());
+                    data.Add(line.physics_occluder.ToString());
+                    data.Add(line.decoration.ToString());
+                }
+                foreach( var obj in model.objs)
+                {
+                    data.Add("OBJECT");
+                    data.Add(obj.key);
+                    data.Add(obj.x.ToString());
+                    data.Add(obj.y.ToString());
+                    data.Add(obj.json.Replace("\n","").Replace("\r",""));
+                }
+                foreach(var prop in model.props)
+                {
+                    data.Add("PROP");
+                    data.Add(prop.image_key);
+                    data.Add(prop.x.ToString());
+                    data.Add(prop.y.ToString());
+                    data.Add(prop.w.ToString());
+                    data.Add(prop.h.ToString());
+                    data.Add(prop.r.ToString());
+                    data.Add(prop.type.ToString());
+                }
+
+                System.IO.File.WriteAllLines(sfd.FileName, data.ToArray());
+            
+            }
+        }
+
+        public void loadModel()
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            if(ofd.ShowDialog() == DialogResult.OK)
+            {
+                var data = System.IO.File.ReadAllLines(ofd.FileName);
+                int row = 0; string mode = "";
+                
+                foreach( var txt in data)
+                {
+                    if (txt.Equals("MODEL"))
+                    {
+                        row = 0;
+                        mode = txt;
+                        continue;
+                    }
+                    if(txt.Equals("LINE")) {
+                        model.lines.Add(new line());
+                        row = 0;
+                        mode = txt;
+                        continue;
+                    }
+                    if(txt.Equals("OBJECT"))
+                    {
+                        model.objs.Add(new obj());
+                        row = 0;
+                        mode = txt;
+                        continue;
+                    }
+                    if(txt.Equals("PROP"))
+                    {
+                        model.props.Add(new prop());
+                        row = 0;
+                        mode = txt;
+                    }
+
+                    else
+                    {
+                        if(mode.Equals("MODEL"))
+                        {
+                            if (row == 0) double.TryParse(txt, out model.width);
+                            if (row == 1) double.TryParse(txt, out model.height);
+                        }
+
+                        if(mode.Equals("LINE"))
+                        {
+                            if (row == 0) double.TryParse(txt, out model.lines.Last().x1);
+                            if (row == 1) double.TryParse(txt, out model.lines.Last().y1);
+                            if (row == 2) double.TryParse(txt, out model.lines.Last().x2);
+                            if (row == 3) double.TryParse(txt, out model.lines.Last().y2);
+                            if (row == 4) Boolean.TryParse(txt, out model.lines.Last().light_occluder);
+                            if (row == 5) Boolean.TryParse(txt, out model.lines.Last().physics_occluder);
+                            if (row == 6) Boolean.TryParse(txt, out model.lines.Last().decoration);
+                        }
+
+                        if(mode.Equals("OBJECT"))
+                        {
+                            if (row == 0) model.objs.Last().key = txt;
+                            if (row == 1) double.TryParse(txt, out model.objs.Last().x);
+                            if (row == 2) double.TryParse(txt, out model.objs.Last().y);
+                            if (row == 3) model.objs.Last().json = txt;
+                        }
+
+                        if(mode.Equals("PROP"))
+                        {
+                            if (row == 0)
+                            {
+                                model.props.Last().image_key = txt;
+                                try
+                                {
+                                    model.props.Last().image = state.prop_images[state.prop_names.IndexOf(model.props.Last().image_key)];
+                                } catch
+                                {
+                                    //...
+                                }
+                            }
+                            if (row == 1) double.TryParse(txt, out model.props.Last().x);
+                            if (row == 2) double.TryParse(txt, out model.props.Last().y);
+                            if (row == 3) double.TryParse(txt, out model.props.Last().w);
+                            if (row == 4) double.TryParse(txt, out model.props.Last().h);
+                            if (row == 5) double.TryParse(txt, out model.props.Last().r);
+                            if (row == 6) int.TryParse(txt, out model.props.Last().type);
+                        }
+
+                        row = row + 1;
+                    }
+                }
+            }
+
+        }
+
+
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='s')
+            {
+                saveModel();   
+            }
+            if(e.KeyChar=='l')
+            {
+                loadModel();
+            }
             if(e.KeyChar=='`')
             {
                 if (!MP.Visible)
@@ -582,7 +735,8 @@ namespace wrenk
                 {
                    
                     var g = Graphics.FromImage(nbm);
-                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
                     var bg_color = Color.AntiqueWhite;
                     {
@@ -611,7 +765,11 @@ namespace wrenk
                                 g.TranslateTransform(pp.X, pp.Y);
                                 g.RotateTransform((float)p.r);
                                 g.TranslateTransform(-s.Width, -s.Height);
-                                g.DrawImage(p.image, 0.0f, 0.0f, s.Width * 2, s.Height * 2);
+                                try
+                                {
+                                    g.DrawImage(p.image, 0.0f, 0.0f, s.Width * 2, s.Height * 2);
+                                }
+                                catch (Exception e) { }
 
                                
                                 g.ResetTransform();
