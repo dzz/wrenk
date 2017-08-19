@@ -62,6 +62,12 @@
     <Compile Include="propeditor.Designer.cs">
       <DependentUpon>propeditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="rescale.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="rescale.Designer.cs">
+      <DependentUpon>rescale.cs</DependentUpon>
+    </Compile>
     <Compile Include="wrenk.cs" />
     <Compile Include="wrenk.Designer.cs">
       <DependentUpon>wrenk.cs</DependentUpon>
@@ -76,6 +82,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="propeditor.resx">
       <DependentUpon>propeditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="rescale.resx">
+      <DependentUpon>rescale.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="wrenk.resx">
       <DependentUpon>wrenk.cs</DependentUpon>

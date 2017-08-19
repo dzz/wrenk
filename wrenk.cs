@@ -46,8 +46,8 @@ namespace wrenk
 
     public class model
     {
-        static public double width = 200;
-        static public double height = 200;
+        static public double width = 100;
+        static public double height = 100;
         static public List<line> lines = new List<line>();
         static public List<obj> objs = new List<obj>();
         static public List<prop> props = new List<prop>();
@@ -144,7 +144,7 @@ namespace wrenk
             //fbd.ShowDialog();
             //var path = fbd.SelectedPath;
 
-            var path = "c:\\users\\dzz\\kthuune\\resources\\forest\\";
+            var path = "c:\\users\\dzz\\kthuune\\resources\\props\\";
 
             var pngs = System.IO.Directory.GetFiles(path, "*.png");
             foreach(var png in pngs)
@@ -370,11 +370,41 @@ namespace wrenk
 
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='r')
+            {
+                var rd = new rescale();
+                rd.ShowDialog();
+
+                double scale = rd.getVal();
+                foreach( var l in model.lines)
+                {
+                    l.x1 *= scale;
+                    l.y1 *= scale;
+                    l.x2 *= scale;
+                    l.y2 *= scale;
+
+                }
+                foreach( var o in model.objs)
+                {
+                    o.x *= scale;
+                    o.y *= scale;
+                }
+
+                foreach( var p in model.props)
+                {
+                    p.x *= scale;
+                    p.y *= scale;
+                    p.w *= scale;
+                    p.h *= scale;
+                    
+                }
+            }
+                
             if(e.KeyChar=='s')
             {
                 saveModel();   
             }
-            if(e.KeyChar=='l')
+            if(e.KeyChar=='o')
             {
                 loadModel();
             }
@@ -392,13 +422,13 @@ namespace wrenk
             }
             if(e.KeyChar=='=')
             {
-                state.snap += 2.0;
+                state.snap += 0.25;
             }
 
             if(e.KeyChar=='-')
             {
-                if(state.snap>2.0)
-                state.snap -= 2.0;
+                if(state.snap>0.25)
+                state.snap -= 0.25;
             }
             int offs = 0;
             if (e.KeyChar == ']') offs = 1;
@@ -413,7 +443,22 @@ namespace wrenk
             if (state.layer_index < 0) state.layer_index = layernames.Count - 1;
             state.input_state = state.LS_STATE_OPEN;
 
-            if(state.layer_index==0)
+            if(state.layer_index == state.LAYER_OBJECTS)
+            {
+                if (e.KeyChar == 'x')
+                {
+                    model.objs = model.objs.Where(x => x != OE.selected).ToList();
+                }
+            }
+            if (state.layer_index == state.LAYER_OBJECTS)
+            {
+                if (e.KeyChar == 'x')
+                {
+                    model.props = model.props.Where(x => x != PE.selected).ToList();
+                }
+            }
+
+                if (state.layer_index==0)
             {
                 if(e.KeyChar=='x')
                 {
