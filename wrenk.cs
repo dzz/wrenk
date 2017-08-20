@@ -61,7 +61,7 @@ namespace wrenk
         static public double cy = 0.0;
         static public double zoom = 2.0;
         static public int layer_index = 0;
-
+        static public bool grid_enabled = true;
         static public int LAYER_LINES = 0;
         static public int LAYER_OBJECTS = 1;
         static public int LAYER_PROPS = 2;
@@ -370,6 +370,10 @@ namespace wrenk
 
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='g')
+            {
+                state.grid_enabled = !state.grid_enabled;
+            }
             if(e.KeyChar=='r')
             {
                 var rd = new rescale();
@@ -562,8 +566,36 @@ namespace wrenk
         {
             PointF npt = itpt(e.X,e.Y);
 
-            state.mx = npt.X;
-            state.my = npt.Y;
+
+           
+            double effective_snap = state.snap;
+
+            if(state.input_state == state.RS_STATE_SELECTING) {
+                effective_snap /= 2;
+            }
+
+
+            double x = npt.X;
+            double y = npt.Y;
+
+            x -= (-model.width);
+            y -= (-model.height);
+
+            x /= effective_snap;
+            y /= effective_snap;
+
+            x += 0.5;
+            y += 0.5;
+
+            x = Math.Floor(x) * effective_snap;
+            y = Math.Floor(y) * effective_snap;
+            
+
+            x += (-model.width);
+            y += (-model.height);
+
+            state.mx = x; 
+            state.my = y;
             
         }
 
@@ -729,14 +761,16 @@ namespace wrenk
             double cx = this.Width / 2.0;
             double cy = this.Height / 2.0;
 
+
+            x -= state.cx;
+            y -= state.cy;
+
             x *= state.zoom;
             y *= state.zoom;
 
             x += cx;
             y += cy;
 
-            x -= state.cx;
-            y -= state.cy;
 
             return new PointF((float)x, (float)y);
 
@@ -749,20 +783,22 @@ namespace wrenk
 
             x -= cx;
             y -= cy;
-            
-            x += state.cx;
-            y += state.cy;
 
             x /= state.zoom;
             y /= state.zoom;
 
+            x += state.cx;
+            y += state.cy;
+
+            /*
             double effective_snap = state.snap;
 
             if(state.input_state == state.RS_STATE_SELECTING) {
                 effective_snap /= 2;
             }
             x = Math.Floor(x / effective_snap) * effective_snap;
-            y = Math.Floor(y / effective_snap) * effective_snap;
+            y = Math.Floor(y / effective_snap) * effective_snap;*/
+
             return new PointF((float)x, (float)y);
         }
         public SizeF tsz(double w, double h)
@@ -787,12 +823,7 @@ namespace wrenk
                     {
                         g.Clear(bg_color);
 
-                        {
-                            //draw bounds
-                            PointF p = this.tpt(0.0 - model.width, 0.0 - model.height);
-                            SizeF s = this.tsz(model.width * 2, model.height * 2);
-                            g.DrawRectangle(this.area_pen, p.X, p.Y, s.Width, s.Height);
-                        }
+                       
                         {
                             //draw props
                             model.props = model.props.OrderBy(o => o.y).ToList();
@@ -829,6 +860,35 @@ namespace wrenk
                                 }
                                 
                             }
+                        }
+                        {
+                            //draw bounds
+                            PointF p = this.tpt(0.0 - model.width, 0.0 - model.height);
+                            SizeF s = this.tsz(model.width * 2, model.height * 2);
+                            g.DrawRectangle(this.area_pen, p.X, p.Y, s.Width, s.Height);
+
+                            //draw grid
+
+                            if (state.snap >= 2 && state.grid_enabled)
+                            {
+                                SizeF cell_size = this.tsz(state.snap, state.snap);
+                                int cells_x = (int)(s.Width / cell_size.Width);
+                                int cells_y = (int)(s.Height / cell_size.Height);
+
+                                for (int i = 0; i < cells_x; ++i)
+                                {
+                                    float x = p.X + i * (cell_size.Width);
+                                    g.DrawLine(Pens.Coral, x, p.Y, x, p.Y + s.Height);
+                                }
+
+                                for (int i = 0; i < cells_y; ++i)
+                                {
+                                    float y = p.Y + i * (cell_size.Height);
+                                    g.DrawLine(Pens.Coral, p.X, y, p.X + s.Width, y);
+                                }
+                            }
+
+
                         }
                         {
                             //draw lines
@@ -917,7 +977,7 @@ namespace wrenk
                             // state.mx = 0;
                             //  state.my = 0;
                             PointF p = this.tpt(state.mx, state.my);
-                            g.DrawRectangle(System.Drawing.Pens.Red, p.X, p.Y, 5, 5);
+                            g.DrawRectangle(System.Drawing.Pens.Red, p.X-4, p.Y-4, 8, 8);
 
                         }
 
@@ -935,6 +995,8 @@ namespace wrenk
 
                             g.DrawString("input state:" + state.input_state.ToString(), f, Brushes.Black, 10, 80);
                             g.DrawString("snap:" + state.snap.ToString(), f, Brushes.Black, 10, 90);
+                            g.DrawString("curs:" + state.mx.ToString() + "," + state.my.ToString(), f, Brushes.Black, 10, 100);
+
                         }
 
                         {
