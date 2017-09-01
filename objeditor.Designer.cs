@@ -34,20 +34,33 @@
             // 
             // keySelector
             // 
+            this.keySelector.BackColor = System.Drawing.Color.Black;
+            this.keySelector.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.keySelector.ForeColor = System.Drawing.Color.Yellow;
             this.keySelector.FormattingEnabled = true;
             this.keySelector.Items.AddRange(new object[] {
+            "[ PLAYER ]",
+            "player_start",
+            "[ ENVIRONMENT ]",
+            "light",
+            "[ DOORS ]",
+            "door_pin",
+            "door_end",
+            "door_sensor",
+            "[ NPC ]",
             "elder",
             "skeline",
-            "wormfield",
-            "totem",
-            "playerstart"});
+            "[ LEVEL ]",
+            "area_switch"});
             this.keySelector.Location = new System.Drawing.Point(12, 12);
             this.keySelector.Name = "keySelector";
-            this.keySelector.Size = new System.Drawing.Size(307, 21);
+            this.keySelector.Size = new System.Drawing.Size(307, 22);
             this.keySelector.TabIndex = 0;
             // 
             // jsonEditor
             // 
+            this.jsonEditor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            this.jsonEditor.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.jsonEditor.Location = new System.Drawing.Point(12, 39);
             this.jsonEditor.Multiline = true;
             this.jsonEditor.Name = "jsonEditor";

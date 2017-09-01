@@ -19,6 +19,7 @@ namespace wrenk
         public bool light_occluder = true;
         public bool decoration = false;
         public bool selected = false;
+        public int magic_line = -1;
     }
 
     public class obj {
@@ -79,7 +80,7 @@ namespace wrenk
         static public double open_line_x = 0.0;
         static public double open_line_y = 0.0;
 
-        static public double snap = 4.0;
+        static public double snap = 2.0;
         static public bool modifier = false;
         static public bool accumulator = false;
 
@@ -172,6 +173,7 @@ namespace wrenk
                     o.x = state.mx;
                     o.y = state.my;
                     model.objs.Add(o);
+                    OE.selected = null;
                     OE.synch(o);
                 }
 
@@ -474,6 +476,7 @@ namespace wrenk
                     foreach(var line in selected)
                     {
                         line.physics_occluder = true;
+                        line.magic_line = -1;
                     }
                 }
                 if (e.KeyChar == 'p')
@@ -481,6 +484,7 @@ namespace wrenk
                     foreach (var line in selected)
                     {
                         line.physics_occluder = false;
+                        line.magic_line = -1;
                     }
                 }
                 if (e.KeyChar == 'L')
@@ -488,6 +492,7 @@ namespace wrenk
                     foreach (var line in selected)
                     {
                         line.light_occluder = true;
+                        line.magic_line = -1;
                     }
                 }
                 if (e.KeyChar == 'l')
@@ -495,6 +500,7 @@ namespace wrenk
                     foreach (var line in selected)
                     {
                         line.light_occluder= false;
+                        line.magic_line = -1;
                     }
                 }
                 if (e.KeyChar == 'D')
@@ -502,6 +508,7 @@ namespace wrenk
                     foreach (var line in selected)
                     {
                         line.decoration = true;
+                        line.magic_line = -1;
                     }
                 }
                 if (e.KeyChar == 'd')
@@ -509,8 +516,22 @@ namespace wrenk
                     foreach (var line in selected)
                     {
                         line.decoration = false;
+                        line.magic_line = -1;
                     }
                 }
+
+                int magic_line = -1;
+                if( int.TryParse(""+e.KeyChar,out magic_line))
+                {
+                    foreach( var line in selected)
+                    {
+                        line.physics_occluder = false;
+                        line.light_occluder = false;
+                        line.decoration = false;
+                        line.magic_line = magic_line;
+                    }
+                }
+                
             }
 
             if(state.layer_index == state.LAYER_OBJECTS)
@@ -861,6 +882,7 @@ namespace wrenk
                                 
                             }
                         }
+
                         {
                             //draw bounds
                             PointF p = this.tpt(0.0 - model.width, 0.0 - model.height);
@@ -928,6 +950,22 @@ namespace wrenk
                                 if(line.decoration)
                                 {
                                     p.Color = Color.DarkGreen;
+                                }
+
+                                if(line.magic_line!=-1)
+                                {
+                                    var pal = new List<Color>();
+                                    for(int i=0; i<10; ++i)
+                                    {
+                                        p.Width = 4.0f;
+                                        p.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
+                                        pal.Add(Color.FromArgb(255-(i*25),128+((i%3)*30),(i%8)*6));
+                                        
+                                    }
+
+                                    g.DrawString(line.magic_line.ToString(), DefaultFont, Brushes.Red, p1);
+                                    g.DrawString(line.magic_line.ToString(), DefaultFont, Brushes.Red, p2);
+                                    p.Color = pal[line.magic_line];
                                 }
                                 g.DrawLine(p, p1, p2);
                             }
