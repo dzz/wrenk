@@ -107,6 +107,8 @@ namespace wrenk
         private System.Drawing.Pen pending_line_pen;
         private System.Drawing.Pen base_line_pen;
         private System.Drawing.Pen selected_line_pen;
+
+        private System.Drawing.Pen hilight_pen;
         private objeditor OE = new objeditor();
         private propeditor PE;
         private tileeditor TE = new tileeditor();
@@ -131,12 +133,17 @@ namespace wrenk
             this.pending_line_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
             this.base_line_pen = new System.Drawing.Pen(Color.CadetBlue, 1.9f);
             this.selected_line_pen = new System.Drawing.Pen(Color.LightCoral, 8.0f);
+            this.hilight_pen= new System.Drawing.Pen(Color.LightSkyBlue, 8.0f);
+
 
             this.sel_pen = new System.Drawing.Pen(Color.CornflowerBlue, 0.5f);
             this.sel_pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
 
             this.MouseDoubleClick += ViewForm_MouseDoubleClick;
             this.MouseClick += ViewForm_MouseClick;
+            this.MouseDown += ViewForm_MouseDown;
+            this.MouseMove += ViewForm_MouseMove1;
+            this.MouseUp += ViewForm_MouseUp;
             this.MouseMove += ViewForm_MouseMove;
             this.MouseWheel += ViewForm_MouseWheel;
             this.KeyPress += ViewForm_KeyPress;
@@ -170,6 +177,54 @@ namespace wrenk
             PE = new propeditor();
 
 
+        }
+
+        private void ViewForm_MouseMove1(object sender, MouseEventArgs e)
+        {
+            if (this.mouseDown)
+            {
+                this.tileMousePaint();
+            }
+        }
+
+        private void ViewForm_MouseUp(object sender, MouseEventArgs e)
+        {
+            this.mouseDown = false;
+        }
+
+        public void tileMousePaint()
+        {
+            if (state.layer_index == state.LAYER_TILES)
+            {
+                int tx = ((int)(state.mx)) / 2;
+                int ty = ((int)(state.my)) / 2;
+
+                var matches = model.tiles.Where(o => (o.x == tx) && (o.y == ty)).ToList();
+                int prev_idx;
+                if (matches.Count > 0)
+                {
+                    prev_idx = matches[0].idx;
+                    model.tiles.Remove(matches[0]);
+                }
+
+                if ((!state.modifier))
+                {
+                    tile t = new tile();
+                    t.x = tx;
+                    t.y = ty;
+                    t.idx = this.TE.selected_index;
+                    model.tiles.Add(t);
+                }
+
+            }
+        }
+        bool mouseDown = false;
+        private void ViewForm_MouseDown(object sender, MouseEventArgs e)
+        {
+            this.tileMousePaint();
+
+            if(e.Button == MouseButtons.Left)
+            this.mouseDown = true;
         }
 
         private void ViewForm_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -295,6 +350,14 @@ namespace wrenk
                     data.Add(prop.type.ToString());
                 }
 
+                foreach(var tile in model.tiles)
+                {
+                    data.Add("TILE");
+                    data.Add(tile.x.ToString());
+                    data.Add(tile.y.ToString());
+                    data.Add(tile.idx.ToString());
+                }
+
                 System.IO.File.WriteAllLines(sfd.FileName, data.ToArray());
             
             }
@@ -307,6 +370,7 @@ namespace wrenk
             model.lines = new List<line>();
             model.props = new List<prop>();
             model.objs = new List<obj>();
+            model.tiles = new List<tile>();
 
             if(ofd.ShowDialog() == DialogResult.OK)
             {
@@ -344,6 +408,13 @@ namespace wrenk
                     if(txt.Equals("PROP"))
                     {
                         model.props.Add(new prop());
+                        row = 0;
+                        mode = txt;
+                    }
+
+                    if(txt.Equals("TILE"))
+                    {
+                        model.tiles.Add(new tile());
                         row = 0;
                         mode = txt;
                     }
@@ -403,6 +474,15 @@ namespace wrenk
                             if (row == 4) double.TryParse(txt, out model.props.Last().h);
                             if (row == 5) double.TryParse(txt, out model.props.Last().r);
                             if (row == 6) int.TryParse(txt, out model.props.Last().type);
+                        }
+
+                        if(mode.Equals("TILE"))
+                        {
+
+                            if (row == 0) double.TryParse(txt, out model.tiles.Last().x);
+                            if (row == 1) double.TryParse(txt, out model.tiles.Last().y);
+                            if (row == 2) int.TryParse(txt, out model.tiles.Last().idx);
+
                         }
 
                         row = row + 1;
@@ -770,24 +850,7 @@ namespace wrenk
 
             if(e.Button == MouseButtons.Left)
             {
-                if (state.layer_index == state.LAYER_TILES)
-                {
-                    int tx = ((int)(state.mx)) / 2;
-                    int ty = ((int)(state.my)) / 2;
-
-                    var matches = model.tiles.Where(o => (o.x == tx) && (o.y == ty)).ToList();
-                    if(matches.Count>0)
-                    {
-                        model.tiles.Remove(matches[0]);
-                    }
-
-                    tile t = new tile();
-                    t.x = tx;
-                    t.y = ty;
-                    t.idx = this.TE.selected_index;
-
-                    model.tiles.Add(t);
-                }
+               
                 if (state.layer_index == state.LAYER_LINES)
                 {
                     if (state.input_state == state.LS_STATE_OPEN && state.layer_index == 0)
@@ -915,7 +978,7 @@ namespace wrenk
                    
                     var g = Graphics.FromImage(nbm);
                     g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
-                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 
                     var bg_color = Color.AntiqueWhite;
                     {
@@ -1029,6 +1092,11 @@ namespace wrenk
                                 if(line.selected)
                                 {
                                     g.DrawLine(this.selected_line_pen, p1, p2);
+                                }
+
+                                else
+                                {
+                                    g.DrawLine(this.hilight_pen, p1, p2);
                                 }
 
                                 Pen p = new System.Drawing.Pen(Color.LightGray, 2.5f);
