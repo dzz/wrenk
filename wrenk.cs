@@ -253,8 +253,8 @@ namespace wrenk
                     p.image = PE.PictureBox.Image;
                     p.x = state.mx;
                     p.y = state.my;
-                    p.w = 100;
-                    p.h = 100;
+                    p.w = 32;
+                    p.h = 32;
                     p.r = 0;
                     p.type = 0;
 
@@ -597,7 +597,7 @@ namespace wrenk
                     model.objs = model.objs.Where(x => x != OE.selected).ToList();
                 }
             }
-            if (state.layer_index == state.LAYER_OBJECTS)
+            if (state.layer_index == state.LAYER_PROPS)
             {
                 if (e.KeyChar == 'x')
                 {
@@ -726,8 +726,9 @@ namespace wrenk
                 {
                     if (PE.selected != null)
                     {
-                        if (e.Delta > 0) { PE.selected.r -= 2.0f; };
-                        if (e.Delta < 0) { PE.selected.r += 2.0f; }
+                        float amt = 360.0f / 16.0f;
+                        if (e.Delta > 0) { PE.selected.r -= amt; };
+                        if (e.Delta < 0) { PE.selected.r += amt; }
                     }
                 }
             }
