@@ -221,10 +221,13 @@ namespace wrenk
         bool mouseDown = false;
         private void ViewForm_MouseDown(object sender, MouseEventArgs e)
         {
-            this.tileMousePaint();
+           
 
             if(e.Button == MouseButtons.Left)
-            this.mouseDown = true;
+            {
+                this.tileMousePaint();
+                this.mouseDown = true;
+            }
         }
 
         private void ViewForm_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -253,6 +256,7 @@ namespace wrenk
                     p.w = 100;
                     p.h = 100;
                     p.r = 0;
+                    p.type = 0;
 
                     if(PE.selected != null)
                     {
@@ -410,6 +414,7 @@ namespace wrenk
                         model.props.Add(new prop());
                         row = 0;
                         mode = txt;
+                        continue;
                     }
 
                     if(txt.Equals("TILE"))
@@ -417,6 +422,7 @@ namespace wrenk
                         model.tiles.Add(new tile());
                         row = 0;
                         mode = txt;
+                        continue;
                     }
 
                     else
@@ -465,7 +471,7 @@ namespace wrenk
                                     model.props.Last().image = state.prop_images[state.prop_names.IndexOf(model.props.Last().image_key)];
                                 } catch
                                 {
-                                    //...
+                                    MessageBox.Show("ERROR FINDING PROPIMAGE");
                                 }
                             }
                             if (row == 1) double.TryParse(txt, out model.props.Last().x);
@@ -474,6 +480,7 @@ namespace wrenk
                             if (row == 4) double.TryParse(txt, out model.props.Last().h);
                             if (row == 5) double.TryParse(txt, out model.props.Last().r);
                             if (row == 6) int.TryParse(txt, out model.props.Last().type);
+                            Console.WriteLine("LOADED TYPE=>" + model.props.Last().type);
                         }
 
                         if(mode.Equals("TILE"))
@@ -533,6 +540,13 @@ namespace wrenk
                 }
             }
                 
+            if(e.KeyChar=='*')
+            {
+                model.props = new List<prop>();
+                model.lines = new List<line>();
+                model.objs = new List<obj>();
+                model.tiles = new List<tile>();
+            }
             if(e.KeyChar=='s')
             {
                 saveModel();   
@@ -978,12 +992,14 @@ namespace wrenk
                    
                     var g = Graphics.FromImage(nbm);
                     g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
-                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
                     var bg_color = Color.AntiqueWhite;
                     {
                         g.Clear(bg_color);
 
+                        drawProps(g, 0);
+                        drawProps(g, 1);
                         {
                             //draw tiles
                             foreach(var tile in model.tiles)
@@ -1007,41 +1023,8 @@ namespace wrenk
                             }
                         }
                         {
-                            //draw props
-                            model.props = model.props.OrderBy(o => o.y).ToList();
-                                
-                            foreach(var p in model.props)
-                            {
-                                PointF pp = this.tpt(p.x, p.y);
-                                SizeF s = this.tsz(p.w, p.h);
-
-                                //g.RotateTransform(t);
-                                
-                                
-                                //g.DrawImage(p.image, pp.X - s.Width, pp.Y - s.Height, s.Width * 2, s.Height * 2);
-                                
-                                g.TranslateTransform(pp.X, pp.Y);
-                                g.RotateTransform((float)p.r);
-                                g.TranslateTransform(-s.Width, -s.Height);
-                                try
-                                {
-                                    g.DrawImage(p.image, 0.0f, 0.0f, s.Width * 2, s.Height * 2);
-                                }
-                                catch (Exception e) { }
-
-                               
-                                g.ResetTransform();
-
-                                
-
-                                if(p == PE.selected)
-                                {
-                                    float w = s.Width * 1.03f;
-                                    float h = s.Height * 1.03f;
-                                    g.DrawRectangle(Pens.Red, pp.X - w, pp.Y - h, w * 2, h * 2);
-                                }
-                                
-                            }
+                            drawProps(g,2);
+                            drawProps(g, 3);
                         }
 
                         {
@@ -1244,6 +1227,46 @@ namespace wrenk
             catch (Exception ex) { }
         }
 
+        private void drawProps(Graphics g, int type)
+        {
+            //draw props
+            var renderpass = model.props.OrderBy(o => o.y).Where( o=> o.type == type).ToList();
+
+            
+            foreach (var p in renderpass)
+            {
+                Console.WriteLine(p.type.ToString());
+                PointF pp = this.tpt(p.x, p.y);
+                SizeF s = this.tsz(p.w, p.h);
+
+                //g.RotateTransform(t);
+
+
+                //g.DrawImage(p.image, pp.X - s.Width, pp.Y - s.Height, s.Width * 2, s.Height * 2);
+
+                g.TranslateTransform(pp.X, pp.Y);
+                g.RotateTransform((float)p.r);
+                g.TranslateTransform(-s.Width, -s.Height);
+                try
+                {
+                    g.DrawImage(p.image, 0.0f, 0.0f, s.Width * 2, s.Height * 2);
+                }
+                catch (Exception e) { }
+
+
+                g.ResetTransform();
+
+
+
+                if (p == PE.selected)
+                {
+                    float w = s.Width * 1.03f;
+                    float h = s.Height * 1.03f;
+                    g.DrawRectangle(Pens.Red, pp.X - w, pp.Y - h, w * 2, h * 2);
+                }
+
+            }
+        }
     }
     public partial class wrenk : Form
     {
