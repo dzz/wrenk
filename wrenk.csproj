@@ -68,6 +68,12 @@
     <Compile Include="rescale.Designer.cs">
       <DependentUpon>rescale.cs</DependentUpon>
     </Compile>
+    <Compile Include="tileeditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="tileeditor.Designer.cs">
+      <DependentUpon>tileeditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="wrenk.cs" />
     <Compile Include="wrenk.Designer.cs">
       <DependentUpon>wrenk.cs</DependentUpon>
@@ -85,6 +91,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="rescale.resx">
       <DependentUpon>rescale.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="tileeditor.resx">
+      <DependentUpon>tileeditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="wrenk.resx">
       <DependentUpon>wrenk.cs</DependentUpon>

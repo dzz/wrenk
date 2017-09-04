@@ -45,13 +45,21 @@ namespace wrenk
         public double w, h;
     }
 
+    public class tile
+    {
+        public double x;
+        public double y;
+        public int idx;
+    }
+
     public class model
     {
-        static public double width = 100;
-        static public double height = 100;
+        static public double width = 64;
+        static public double height = 64;
         static public List<line> lines = new List<line>();
         static public List<obj> objs = new List<obj>();
         static public List<prop> props = new List<prop>();
+        static public List<tile> tiles = new List<tile>();
     }
 
     public class state
@@ -60,12 +68,13 @@ namespace wrenk
         static public double my = 0.0;
         static public double cx = 0.0;
         static public double cy = 0.0;
-        static public double zoom = 2.0;
+        static public double zoom = 16.0;
         static public int layer_index = 0;
         static public bool grid_enabled = true;
         static public int LAYER_LINES = 0;
         static public int LAYER_OBJECTS = 1;
         static public int LAYER_PROPS = 2;
+        static public int LAYER_TILES = 3;
         //static public int LAYER_PHOTONS = 3;
 
         static public int input_state = 0;
@@ -99,7 +108,8 @@ namespace wrenk
         private System.Drawing.Pen base_line_pen;
         private System.Drawing.Pen selected_line_pen;
         private objeditor OE = new objeditor();
-        private propeditor PE; 
+        private propeditor PE;
+        private tileeditor TE = new tileeditor();
 
         private System.Drawing.Pen sel_pen;
         private List<string> layernames = new List<string>();
@@ -139,6 +149,7 @@ namespace wrenk
             layernames.Add("line");
             layernames.Add("object");
             layernames.Add("prop");
+            layernames.Add("tile");
             //layernames.Add("photon");
 
             //var fbd = new FolderBrowserDialog();
@@ -244,14 +255,25 @@ namespace wrenk
                 data.Add(model.height.ToString());
                 foreach( var line in model.lines)
                 {
-                    data.Add("LINE");
+                    if (line.magic_line == -1)
+                        data.Add("LINE");
+                    else
+                        data.Add("MAGIC_LINE");
+
                     data.Add(line.x1.ToString());
                     data.Add(line.y1.ToString());
                     data.Add(line.x2.ToString());
                     data.Add(line.y2.ToString());
-                    data.Add(line.light_occluder.ToString());
-                    data.Add(line.physics_occluder.ToString());
-                    data.Add(line.decoration.ToString());
+                    if (line.magic_line == -1)
+                    {
+                        data.Add(line.light_occluder.ToString());
+                        data.Add(line.physics_occluder.ToString());
+                        data.Add(line.decoration.ToString());
+                    }
+                    else
+                    {
+                        data.Add(line.magic_line.ToString());
+                    }
                 }
                 foreach( var obj in model.objs)
                 {
@@ -281,6 +303,11 @@ namespace wrenk
         public void loadModel()
         {
             OpenFileDialog ofd = new OpenFileDialog();
+
+            model.lines = new List<line>();
+            model.props = new List<prop>();
+            model.objs = new List<obj>();
+
             if(ofd.ShowDialog() == DialogResult.OK)
             {
                 var data = System.IO.File.ReadAllLines(ofd.FileName);
@@ -300,7 +327,14 @@ namespace wrenk
                         mode = txt;
                         continue;
                     }
-                    if(txt.Equals("OBJECT"))
+                    if (txt.Equals("MAGIC_LINE"))
+                    {
+                        model.lines.Add(new line());
+                        row = 0;
+                        mode = txt;
+                        continue;
+                    }
+                    if (txt.Equals("OBJECT"))
                     {
                         model.objs.Add(new obj());
                         row = 0;
@@ -333,7 +367,16 @@ namespace wrenk
                             if (row == 6) Boolean.TryParse(txt, out model.lines.Last().decoration);
                         }
 
-                        if(mode.Equals("OBJECT"))
+                        if (mode.Equals("MAGIC_LINE"))
+                        {
+                            if (row == 0) double.TryParse(txt, out model.lines.Last().x1);
+                            if (row == 1) double.TryParse(txt, out model.lines.Last().y1);
+                            if (row == 2) double.TryParse(txt, out model.lines.Last().x2);
+                            if (row == 3) double.TryParse(txt, out model.lines.Last().y2);
+                            if (row == 4) int.TryParse(txt, out model.lines.Last().magic_line);
+                        }
+
+                        if (mode.Equals("OBJECT"))
                         {
                             if (row == 0) model.objs.Last().key = txt;
                             if (row == 1) double.TryParse(txt, out model.objs.Last().x);
@@ -372,6 +415,10 @@ namespace wrenk
 
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='z')
+            {
+                state.zoom = 16;
+            }
             if(e.KeyChar=='g')
             {
                 state.grid_enabled = !state.grid_enabled;
@@ -551,6 +598,14 @@ namespace wrenk
                 PE.Hide();
             }
 
+            if(state.layer_index == state.LAYER_TILES)
+            {
+                TE.Show();
+            }
+            else
+            {
+                TE.Hide();
+            }
         }
 
         private void ViewForm_MouseWheel(object sender, MouseEventArgs e)
@@ -559,6 +614,8 @@ namespace wrenk
             {
                 if (e.Delta > 0) { state.zoom *= 1.1; }
                 if (e.Delta < 0) { state.zoom *= 0.9; }
+
+
             }
             else 
             {
@@ -713,6 +770,24 @@ namespace wrenk
 
             if(e.Button == MouseButtons.Left)
             {
+                if (state.layer_index == state.LAYER_TILES)
+                {
+                    int tx = ((int)(state.mx)) / 2;
+                    int ty = ((int)(state.my)) / 2;
+
+                    var matches = model.tiles.Where(o => (o.x == tx) && (o.y == ty)).ToList();
+                    if(matches.Count>0)
+                    {
+                        model.tiles.Remove(matches[0]);
+                    }
+
+                    tile t = new tile();
+                    t.x = tx;
+                    t.y = ty;
+                    t.idx = this.TE.selected_index;
+
+                    model.tiles.Add(t);
+                }
                 if (state.layer_index == state.LAYER_LINES)
                 {
                     if (state.input_state == state.LS_STATE_OPEN && state.layer_index == 0)
@@ -830,6 +905,8 @@ namespace wrenk
         float t = 0.0f;
         private void redraw()
         {
+
+            System.GC.Collect();
             t = t + 0.1f;
             Bitmap nbm = new Bitmap(this.Width, this.Height);
             try
@@ -844,7 +921,28 @@ namespace wrenk
                     {
                         g.Clear(bg_color);
 
-                       
+                        {
+                            //draw tiles
+                            foreach(var tile in model.tiles)
+                            {
+                                double tmx = tile.x * 2;
+                                double tmy = tile.y * 2;
+
+                                var rect = this.TE.get_source(tile.idx);
+
+                               
+                                Bitmap tileBuffer = new Bitmap(32, 32);
+                                Graphics tgraph = Graphics.FromImage(tileBuffer);
+                                tgraph.DrawImage(this.TE.tileset, new Rectangle(0, 0, 32, 32), rect, GraphicsUnit.Pixel);
+                                tgraph.Dispose();
+                                PointF tp = this.tpt(tmx, tmy);
+                                SizeF s = this.tsz(2, 2);
+
+                                g.DrawImage(tileBuffer, tp.X, tp.Y, s.Width, s.Height);
+                                tileBuffer.Dispose();
+
+                            }
+                        }
                         {
                             //draw props
                             model.props = model.props.OrderBy(o => o.y).ToList();
@@ -910,6 +1008,15 @@ namespace wrenk
                                 }
                             }
 
+
+                        }
+                        if( state.layer_index == state.LAYER_TILES)
+                        {
+                            //draw active tile
+                            SizeF s = this.tsz(2.0, 2.0);
+                            PointF p = this.tpt(state.mx, state.my);
+
+                            g.DrawImage(this.TE.selected, p.X, p.Y, s.Width, s.Height);
 
                         }
                         {

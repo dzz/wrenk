@@ -11,3 +11,4 @@ c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.objedit
 c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.propeditor.resources
 C:\Users\dzz\Documents\Visual Studio 2017\Projects\wrenk\obj\Debug\wrenk.modelprops.resources
 C:\Users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.rescale.resources
+C:\Users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.tileeditor.resources
