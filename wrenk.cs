@@ -212,7 +212,7 @@ namespace wrenk
                     tile t = new tile();
                     t.x = tx;
                     t.y = ty;
-                    t.idx = this.TE.selected_index;
+                    t.idx = this.TE.get_print_tile();
                     model.tiles.Add(t);
                 }
 
@@ -254,7 +254,7 @@ namespace wrenk
                     p.x = state.mx;
                     p.y = state.my;
                     p.w = 32;
-                    p.h = 32;
+                    p.h = 32 ;
                     p.r = 0;
                     p.type = 0;
 

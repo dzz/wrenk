@@ -11,3 +11,4 @@ c:\users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.propedi
 C:\Users\dzz\Documents\Visual Studio 2017\Projects\wrenk\obj\Debug\wrenk.modelprops.resources
 C:\Users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.rescale.resources
 C:\Users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.tileeditor.resources
+C:\Users\dzz\documents\visual studio 2017\Projects\wrenk\obj\Debug\wrenk.csprojResolveAssemblyReference.cache

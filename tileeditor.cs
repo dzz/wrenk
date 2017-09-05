@@ -12,9 +12,24 @@ namespace wrenk
 {
     public partial class tileeditor : Form
     {
+        static Random r = new Random();
         public Image tileset;
         public Image selected;
         public int selected_index;
+        public List<int> selected_indices = new List<int>();
+
+        public int get_print_tile()
+        {
+            if(selected_indices.Count>0)
+            {
+                return selected_indices[r.Next(selected_indices.Count)];
+            } else
+            {
+                return selected_index;
+            }
+
+        }
+
         public tileeditor()
         {
             tileset = Image.FromFile("c:\\users\\dzz\\kthuune\\resources\\forest\\floor_tiles.png");
@@ -51,7 +66,15 @@ namespace wrenk
 
             this.selected = tile;
             pictureBox2.Image = tile;
-            this.selected_index = ((xpin / 32) + ( (ypin/32)*(this.tileset.Width/32)));
+            this.selected_index = ((xpin / 32) + ((ypin / 32) * (this.tileset.Width / 32)));
+            if (e.Button == MouseButtons.Left)
+            {
+                this.selected_indices.RemoveAll(x => true);
+                
+            } else
+            {
+                this.selected_indices.Add(this.selected_index);
+            }
            // MessageBox.Show(this.selected_index.ToString());
         }
 
