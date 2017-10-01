@@ -102,7 +102,9 @@ namespace wrenk
     class viewForm : Form
     {
         private Bitmap bm;
+        private Bitmap tilebuffer = null;
         private System.Windows.Forms.Timer refTimer;
+        private System.Windows.Forms.Timer tile_refTimer;
         private System.Drawing.Pen area_pen;
         private System.Drawing.Pen pending_line_pen;
         private System.Drawing.Pen base_line_pen;
@@ -113,15 +115,24 @@ namespace wrenk
         private propeditor PE;
         private tileeditor TE = new tileeditor();
 
+        static Random r = new Random();
+
         private System.Drawing.Pen sel_pen;
         private List<string> layernames = new List<string>();
         public viewForm()
         {
             this.DoubleBuffered = true;
+
             this.refTimer = new System.Windows.Forms.Timer();
-            this.refTimer.Interval = 30;
+            this.refTimer.Interval = 40;
             this.refTimer.Tick += RefTimer_Tick;
             this.refTimer.Start();
+
+            this.tile_refTimer = new System.Windows.Forms.Timer();
+            this.tile_refTimer.Interval = 80;
+            this.tile_refTimer.Tick += Tile_refTimer_Tick;
+            this.tile_refTimer.Start();
+
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.Width = (int)(960 * 1.5);
             this.Height = (int)(540 * 1.5);
@@ -179,6 +190,11 @@ namespace wrenk
 
         }
 
+        private void Tile_refTimer_Tick(object sender, EventArgs e)
+        {
+        //    this.redraw_tiles();
+        }
+
         private void ViewForm_MouseMove1(object sender, MouseEventArgs e)
         {
             if (this.mouseDown)
@@ -194,6 +210,7 @@ namespace wrenk
 
         public void tileMousePaint()
         {
+            tile nt = null;
             if (state.layer_index == state.LAYER_TILES)
             {
                 int tx = ((int)(state.mx)) / 2;
@@ -214,9 +231,11 @@ namespace wrenk
                     t.y = ty;
                     t.idx = this.TE.get_print_tile();
                     model.tiles.Add(t);
+                    nt = t;
                 }
 
             }
+            redraw_tiles(nt);
         }
         bool mouseDown = false;
         private void ViewForm_MouseDown(object sender, MouseEventArgs e)
@@ -500,11 +519,61 @@ namespace wrenk
         }
 
 
+        public void doTileImport()
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            Dictionary<int, List<int>> mapping = new Dictionary<int, List<int>>();
+            model.tiles.Clear();
+            if( ofd.ShowDialog() == DialogResult.OK)
+            {
+                Bitmap refimg = (Bitmap)Bitmap.FromFile(ofd.FileName);
+
+                model.width = refimg.Width;
+                model.height = refimg.Height;
+                
+                for(int i=0; i<model.width;++i)
+                {
+                    for(int j=0;j<model.height;++j )
+                    {
+                        var pixel = refimg.GetPixel(i, j);
+
+                        if (!(mapping.Keys.Contains(pixel.ToArgb()))){
+                            tileeditor picker = new tileeditor();
+                            picker.ControlBox = true;
+                            picker.BackColor = pixel;
+                            picker.ShowDialog();
+                            mapping[pixel.ToArgb()] = picker.selected_indices;
+                        }
+
+                        if (mapping.Keys.Contains(pixel.ToArgb()))
+                        {
+                            var t = new tile();
+                            t.x = (i) - (model.width / 2);
+                            t.y = (j) - (model.height / 2);
+                            var opts = mapping[pixel.ToArgb()];
+
+                            if (opts.Count > 0)
+                            {
+                                t.idx = opts[r.Next(opts.Count)];
+                                model.tiles.Add(t);
+                            }
+                        }
+                    }
+                }
+
+            }
+            
+        }
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if(e.KeyChar=='i')
+            {
+                this.doTileImport(); 
+            }
             if(e.KeyChar=='z')
             {
                 state.zoom = 16;
+                this.redraw_tiles(null);
             }
             if(e.KeyChar=='g')
             {
@@ -708,7 +777,7 @@ namespace wrenk
             {
                 if (e.Delta > 0) { state.zoom *= 1.1; }
                 if (e.Delta < 0) { state.zoom *= 0.9; }
-
+                this.redraw_tiles(null);
 
             }
             else 
@@ -745,6 +814,11 @@ namespace wrenk
 
             if(state.input_state == state.RS_STATE_SELECTING) {
                 effective_snap /= 2;
+            }
+
+            if(state.layer_index == state.LAYER_TILES)
+            {
+                effective_snap = 2;
             }
 
 
@@ -818,6 +892,7 @@ namespace wrenk
             {
                 state.cx = state.mx;
                 state.cy = state.my;
+                this.redraw_tiles(null);
             }
 
             if (e.Button == MouseButtons.Right)
@@ -981,6 +1056,55 @@ namespace wrenk
         }
 
         float t = 0.0f;
+
+        private void redraw_tiles(tile nt)
+        {
+
+   
+            Bitmap nbm = new Bitmap(this.Width, this.Height);
+            
+            var g = Graphics.FromImage(nbm);
+            if(nt!=null)
+            {
+                if(this.tilebuffer!=null)
+                g.DrawImage(this.tilebuffer, 0, 0);
+            }
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+
+            {
+                //draw tiles
+                foreach (var tile in model.tiles)
+                {
+                    if (nt != null)
+                        if (nt != tile)
+                            continue;
+                    double tmx = tile.x * 2;
+                    double tmy = tile.y * 2;
+                    PointF tp = this.tpt(tmx, tmy);
+
+                    if (tp.X < 0) continue;
+                    if (tp.Y < 0) continue;
+                    if (tp.X > this.Width) continue;
+                    if (tp.Y > this.Height) continue;
+
+                    var rect = this.TE.get_source(tile.idx);
+
+
+                    Bitmap tileBuffer = new Bitmap(32, 32);
+                    Graphics tgraph = Graphics.FromImage(tileBuffer);
+                    tgraph.DrawImage(this.TE.tileset, new Rectangle(0, 0, 32, 32), rect, GraphicsUnit.Pixel);
+                    tgraph.Dispose();
+               
+                    SizeF s = this.tsz(2, 2);
+
+                    g.DrawImage(tileBuffer, tp.X, tp.Y, s.Width, s.Height);
+                    tileBuffer.Dispose();
+
+                }
+            }
+            this.tilebuffer = nbm;
+        }
         private void redraw()
         {
 
@@ -1002,8 +1126,13 @@ namespace wrenk
                         drawProps(g, 0);
                         drawProps(g, 1);
                         {
+                            
+                            if(this.tilebuffer!=null)
+                            {
+                                g.DrawImageUnscaled(this.tilebuffer, 0, 0);
+                            }
                             //draw tiles
-                            foreach(var tile in model.tiles)
+                           /* foreach(var tile in model.tiles)
                             {
                                 double tmx = tile.x * 2;
                                 double tmy = tile.y * 2;
@@ -1021,7 +1150,7 @@ namespace wrenk
                                 g.DrawImage(tileBuffer, tp.X, tp.Y, s.Width, s.Height);
                                 tileBuffer.Dispose();
 
-                            }
+                            }*/
                         }
                         {
                             drawProps(g,2);
