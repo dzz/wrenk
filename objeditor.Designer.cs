@@ -42,6 +42,7 @@
             "[ PLAYER ]",
             "player_start",
             "[ ENVIRONMENT ]",
+            "totem",
             "light",
             "[ DOORS ]",
             "door_pin",
@@ -50,6 +51,8 @@
             "[ NPC ]",
             "elder",
             "skeline",
+            "acolyte",
+            "cleric",
             "[ LEVEL ]",
             "area_switch"});
             this.keySelector.Location = new System.Drawing.Point(12, 12);

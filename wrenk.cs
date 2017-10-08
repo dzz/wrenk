@@ -517,8 +517,109 @@ namespace wrenk
             }
 
         }
+        
+        
 
+        public int find_neighbor_tile( tile t, int x, int y) {
+            var center = model.tiles.Where(o=>
+                (o.x==t.x+x) &&
+                (o.y==t.y+y)
+              ).ToList();
 
+            if(center.Count>0) {
+                return center[0].idx;
+            }
+            return -1;
+        }
+
+        public line getLine( tile t, string name)
+        {
+            var l = new line();
+
+            l.x1 = t.x * 2;
+            l.y1 = t.y * 2;
+            l.x2 = t.x * 2;
+            l.y2 = t.y * 2;
+
+            if (name == "left")
+            {
+                l.y2 += 2;
+            };
+
+            if(name=="right")
+            {
+                l.y2 += 2;
+                l.x1 += 2;
+                l.x2 += 2;
+            }
+
+            if(name=="top")
+            {
+                l.x2 += 2;
+                
+            }
+
+            if(name=="bottom")
+            {
+                l.y1 += 2;
+                l.y2 += 2;
+                l.x2 += 2;
+            }
+            l.physics_occluder = true;
+            l.light_occluder = false;
+
+            return l;
+        }
+
+        public bool isVoidTile(int idx)
+        {
+            return (idx != -1);
+        }
+
+        public void traceTiles()
+        {
+
+            for(int i=0; i<model.width;++i)
+                for(int j=0; j<model.height;++j)
+                {
+                    var t = new tile();
+                    t.x = (i) - (model.width / 2);
+                    t.y = (j) - (model.height / 2);
+
+                    int topleft = find_neighbor_tile(t,-1,-1);
+                    int topcenter = find_neighbor_tile(t,0,-1);
+                    int topright = find_neighbor_tile(t,1,-1);
+                    int left = find_neighbor_tile(t,-1,0);
+                    int center = find_neighbor_tile(t,0,0);
+                    int right = find_neighbor_tile(t,1,0);
+                    int bottomleft = find_neighbor_tile(t,-1,1);
+                    int bottomcenter = find_neighbor_tile(t,0,1);
+                    int bottomright = find_neighbor_tile(t,1,1);
+
+                    if(!isVoidTile(center))
+                    {
+
+                        if(isVoidTile(topcenter)) {
+                            model.lines.Add( getLine(t,"top"));
+                        }
+
+                        if(isVoidTile(bottomcenter))
+                        {
+                            model.lines.Add(getLine(t, "bottom"));
+                        }
+
+                        if (isVoidTile(left))
+                        {
+                            model.lines.Add(getLine(t, "left"));
+                        }
+                        if(isVoidTile(right))
+                        {
+                            model.lines.Add(getLine(t, "right"));
+                        }
+
+                    }
+                }
+        }
         public void doTileImport()
         {
             OpenFileDialog ofd = new OpenFileDialog();
@@ -562,6 +663,8 @@ namespace wrenk
                 }
 
             }
+
+            traceTiles();
             
         }
         private void ViewForm_KeyPress(object sender, KeyPressEventArgs e)
@@ -975,7 +1078,7 @@ namespace wrenk
                     {
                         var dx = state.mx - o.x;
                         var dy = state.my - o.y;
-                        if((dx*dx)+(dy*dy) < 20)
+                        if((dx*dx)+(dy*dy) < 4)
                         {
                             this.OE.selected = null;
                             this.OE.synch(o);
@@ -1057,17 +1160,26 @@ namespace wrenk
 
         float t = 0.0f;
 
+        Bitmap tbuf1 = new Bitmap(1920, 1080,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        Bitmap tbuf2 = new Bitmap(1920, 1080, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        Bitmap tileBuffer = new Bitmap(32, 32);
         private void redraw_tiles(tile nt)
         {
 
-   
-            Bitmap nbm = new Bitmap(this.Width, this.Height);
+            Bitmap tmp = tbuf2;
+            tbuf2 = tbuf1;
+            tbuf1 = tmp;
+
+            Bitmap nbm = tbuf1;
+
+            
             
             var g = Graphics.FromImage(nbm);
+            g.Clear(Color.Transparent);
             if(nt!=null)
             {
                 if(this.tilebuffer!=null)
-                g.DrawImage(this.tilebuffer, 0, 0);
+                g.DrawImageUnscaled(this.tilebuffer, 0, 0);
             }
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
@@ -1091,7 +1203,7 @@ namespace wrenk
                     var rect = this.TE.get_source(tile.idx);
 
 
-                    Bitmap tileBuffer = new Bitmap(32, 32);
+                   
                     Graphics tgraph = Graphics.FromImage(tileBuffer);
                     tgraph.DrawImage(this.TE.tileset, new Rectangle(0, 0, 32, 32), rect, GraphicsUnit.Pixel);
                     tgraph.Dispose();
@@ -1099,18 +1211,36 @@ namespace wrenk
                     SizeF s = this.tsz(2, 2);
 
                     g.DrawImage(tileBuffer, tp.X, tp.Y, s.Width, s.Height);
-                    tileBuffer.Dispose();
+                  //  tileBuffer.Dispose();
 
                 }
             }
+
+            g.Dispose();
             this.tilebuffer = nbm;
+            if(nt!=null)
+            {
+                this.redraw();
+                this.Invalidate();
+            }
         }
+
+
+        Bitmap gbuf1 = new Bitmap(1920, 1080, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+        Bitmap gbuf2 = new Bitmap(1920, 1080, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+
         private void redraw()
         {
 
             System.GC.Collect();
             t = t + 0.1f;
-            Bitmap nbm = new Bitmap(this.Width, this.Height);
+
+            Bitmap tmp = gbuf2;
+            gbuf2 = gbuf1;
+            gbuf1 = tmp;
+
+            Bitmap nbm = gbuf1;
             try
             {
                 {
@@ -1329,14 +1459,14 @@ namespace wrenk
                             //draw objects
                             foreach(var o in model.objs)
                             {
-                                Font f = new Font(FontFamily.GenericMonospace, 6);
+                                Font f = new Font(FontFamily.GenericMonospace, 12);
                                 PointF p = this.tpt(o.x, o.y);
-                                g.DrawRectangle(Pens.DarkCyan, p.X - 10, p.Y - 10, 20, 20);
+                                g.FillRectangle(Brushes.DarkCyan, p.X - 10, p.Y - 10, 20, 20);
                                 g.DrawString(o.key, f, Brushes.DarkBlue, p.X -20 , p.Y + 23);
-
-                                if(o == this.OE.selected)
+                                g.DrawString(o.key, f, Brushes.Red, p.X - 20, p.Y + 24);
+                                if (o == this.OE.selected)
                                 {
-                                    g.DrawRectangle(Pens.DarkMagenta, p.X - 13, p.Y - 13, 26, 26);
+                                    g.DrawRectangle(Pens.Red, p.X - 13, p.Y - 13, 26, 26);
                                 }
                             }
                         }
