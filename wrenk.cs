@@ -11,7 +11,6 @@ using System.Windows.Forms;
 namespace wrenk
 {
 
-
     public class line
     {
         public double x1, y1, x2, y2;
@@ -26,6 +25,10 @@ namespace wrenk
         public string key = "";
         public string json = "{}";
         public double x, y;
+        public bool region= false;
+        public double w, h;
+
+
     }
 
     public class prop
@@ -360,6 +363,9 @@ namespace wrenk
                     data.Add(obj.x.ToString());
                     data.Add(obj.y.ToString());
                     data.Add(obj.json.Replace("\n","").Replace("\r",""));
+                    data.Add(obj.region.ToString());
+                    data.Add(obj.w.ToString());
+                    data.Add(obj.h.ToString());
                 }
                 foreach(var prop in model.props)
                 {
@@ -478,9 +484,13 @@ namespace wrenk
                             if (row == 1) double.TryParse(txt, out model.objs.Last().x);
                             if (row == 2) double.TryParse(txt, out model.objs.Last().y);
                             if (row == 3) model.objs.Last().json = txt;
+                            if (row == 4) model.objs.Last().region = bool.TryParse(txt, out model.objs.Last().region);
+                            if (row == 5) double.TryParse(txt, out model.objs.Last().w);
+                            if (row == 6) double.TryParse(txt, out model.objs.Last().h);
+
                         }
 
-                        if(mode.Equals("PROP"))
+                        if (mode.Equals("PROP"))
                         {
                             if (row == 0)
                             {
@@ -1205,6 +1215,7 @@ namespace wrenk
 
                    
                     Graphics tgraph = Graphics.FromImage(tileBuffer);
+                    tgraph.Clear(Color.Transparent);
                     tgraph.DrawImage(this.TE.tileset, new Rectangle(0, 0, 32, 32), rect, GraphicsUnit.Pixel);
                     tgraph.Dispose();
                
@@ -1370,22 +1381,29 @@ namespace wrenk
                                     p.Color = Color.DarkGreen;
                                 }
 
-                                if(line.magic_line!=-1)
+                                if (line.magic_line != -1)
                                 {
                                     var pal = new List<Color>();
-                                    for(int i=0; i<10; ++i)
+                                    for (int i = 0; i < 10; ++i)
                                     {
                                         p.Width = 4.0f;
                                         p.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
-                                        pal.Add(Color.FromArgb(255-(i*25),128+((i%3)*30),(i%8)*6));
-                                        
+                                        pal.Add(Color.FromArgb(255 - (i * 25), 128 + ((i % 3) * 30), (i % 8) * 6));
+
                                     }
 
                                     g.DrawString(line.magic_line.ToString(), DefaultFont, Brushes.Red, p1);
                                     g.DrawString(line.magic_line.ToString(), DefaultFont, Brushes.Red, p2);
                                     p.Color = pal[line.magic_line];
+
+                                    
+                                    g.DrawRectangle(p, p1.X, p1.Y, p2.X - p1.X, p2.Y - p1.Y);
                                 }
-                                g.DrawLine(p, p1, p2);
+                                else
+                                {
+
+                                    g.DrawLine(p, p1, p2);
+                                }
                             }
                         }
 
@@ -1396,6 +1414,7 @@ namespace wrenk
                                 PointF p1 = this.tpt(state.open_line_x, state.open_line_y);
                                 PointF p2 = this.tpt(state.mx,state.my);
 
+                                
                                 g.DrawLine(this.pending_line_pen, p1, p2);
                             }
                         }
@@ -1467,6 +1486,15 @@ namespace wrenk
                                 if (o == this.OE.selected)
                                 {
                                     g.DrawRectangle(Pens.Red, p.X - 13, p.Y - 13, 26, 26);
+                                }
+
+                                if(o.region)
+                                {
+                                    Pen rp = new Pen(Color.FromArgb(64,128,128,255), 8.0f);
+                                    SizeF sz = this.tsz(o.w, o.h);
+                                    
+                                    g.DrawRectangle(rp, (float)p.X, (float)p.Y, (float)sz.Width, (float)sz.Height);
+                                    rp.Dispose();
                                 }
                             }
                         }

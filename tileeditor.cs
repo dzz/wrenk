@@ -32,7 +32,22 @@ namespace wrenk
 
         public tileeditor()
         {
-            tileset = Image.FromFile("c:\\users\\dzz\\kthuune\\resources\\forest\\floor_tiles.png");
+            try
+            {
+                tileset = Image.FromFile("c:\\users\\dzz\\kthuune\\resources\\forest\\floor_tiles.png");
+            } catch
+            {
+                MessageBox.Show("Default tileset missing. Please locate tileset image.");
+                OpenFileDialog ofd = new OpenFileDialog();
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+
+                    tileset = Image.FromFile(ofd.FileName);
+                } else
+                {
+                    Environment.Exit(0);
+                }
+            }
             InitializeComponent();
             this.AutoSize = true;
             this.AutoSizeMode = AutoSizeMode.GrowAndShrink;

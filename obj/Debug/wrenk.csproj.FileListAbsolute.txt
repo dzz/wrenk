@@ -18,7 +18,6 @@ C:\Users\dzz\wrenk\obj\Debug\wrenk.objeditor.resources
 C:\Users\dzz\wrenk\obj\Debug\wrenk.propeditor.resources
 C:\Users\dzz\wrenk\obj\Debug\wrenk.rescale.resources
 C:\Users\dzz\wrenk\obj\Debug\wrenk.tileeditor.resources
-C:\Users\dzz\wrenk\obj\Debug\wrenk.line.resources
 C:\Users\dzz\wrenk\obj\Debug\wrenk.Properties.Resources.resources
 C:\Users\dzz\wrenk\obj\Debug\wrenk.csproj.GenerateResource.Cache
 C:\Users\dzz\wrenk\obj\Debug\wrenk.exe
@@ -26,3 +25,4 @@ C:\Users\dzz\wrenk\obj\Debug\wrenk.pdb
 C:\Users\dzz\wrenk\bin\Debug\wrenk.exe.config
 C:\Users\dzz\wrenk\bin\Debug\wrenk.exe
 C:\Users\dzz\wrenk\bin\Debug\wrenk.pdb
+C:\Users\dzz\wrenk\obj\Debug\wrenk.line.resources

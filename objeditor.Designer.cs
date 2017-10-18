@@ -30,6 +30,9 @@
         {
             this.keySelector = new System.Windows.Forms.ComboBox();
             this.jsonEditor = new System.Windows.Forms.TextBox();
+            this.regionCheckbox = new System.Windows.Forms.CheckBox();
+            this.widthBox = new System.Windows.Forms.TextBox();
+            this.heightBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // keySelector
@@ -70,12 +73,39 @@
             this.jsonEditor.Size = new System.Drawing.Size(307, 283);
             this.jsonEditor.TabIndex = 1;
             // 
+            // regionCheckbox
+            // 
+            this.regionCheckbox.AutoSize = true;
+            this.regionCheckbox.Location = new System.Drawing.Point(326, 16);
+            this.regionCheckbox.Name = "regionCheckbox";
+            this.regionCheckbox.Size = new System.Drawing.Size(65, 17);
+            this.regionCheckbox.TabIndex = 2;
+            this.regionCheckbox.Text = "is region";
+            this.regionCheckbox.UseVisualStyleBackColor = true;
+            // 
+            // widthBox
+            // 
+            this.widthBox.Location = new System.Drawing.Point(325, 39);
+            this.widthBox.Name = "widthBox";
+            this.widthBox.Size = new System.Drawing.Size(100, 20);
+            this.widthBox.TabIndex = 3;
+            // 
+            // heightBox
+            // 
+            this.heightBox.Location = new System.Drawing.Point(325, 65);
+            this.heightBox.Name = "heightBox";
+            this.heightBox.Size = new System.Drawing.Size(100, 20);
+            this.heightBox.TabIndex = 4;
+            // 
             // objeditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(331, 334);
+            this.ClientSize = new System.Drawing.Size(445, 334);
             this.ControlBox = false;
+            this.Controls.Add(this.heightBox);
+            this.Controls.Add(this.widthBox);
+            this.Controls.Add(this.regionCheckbox);
             this.Controls.Add(this.jsonEditor);
             this.Controls.Add(this.keySelector);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -90,5 +120,8 @@
 
         private System.Windows.Forms.ComboBox keySelector;
         private System.Windows.Forms.TextBox jsonEditor;
+        private System.Windows.Forms.CheckBox regionCheckbox;
+        private System.Windows.Forms.TextBox widthBox;
+        private System.Windows.Forms.TextBox heightBox;
     }
 }
