@@ -31,6 +31,7 @@
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.listBox1 = new System.Windows.Forms.ListBox();
+            this.specBox = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -48,7 +49,7 @@
             // 
             this.pictureBox1.Location = new System.Drawing.Point(129, 39);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(328, 413);
+            this.pictureBox1.Size = new System.Drawing.Size(328, 324);
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
@@ -70,6 +71,14 @@
             this.listBox1.Size = new System.Drawing.Size(120, 84);
             this.listBox1.TabIndex = 2;
             // 
+            // specBox
+            // 
+            this.specBox.Location = new System.Drawing.Point(3, 434);
+            this.specBox.Name = "specBox";
+            this.specBox.Size = new System.Drawing.Size(454, 20);
+            this.specBox.TabIndex = 4;
+            this.specBox.TextChanged += new System.EventHandler(this.specBox_TextChanged);
+            // 
             // propeditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -77,6 +86,7 @@
             this.BackColor = System.Drawing.Color.Purple;
             this.ClientSize = new System.Drawing.Size(469, 466);
             this.ControlBox = false;
+            this.Controls.Add(this.specBox);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.comboBox1);
@@ -86,6 +96,7 @@
             this.Text = "propeditor";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -94,5 +105,6 @@
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.TextBox specBox;
     }
 }

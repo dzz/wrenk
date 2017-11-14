@@ -25,10 +25,13 @@ namespace wrenk
             this.listBox1.SelectedIndex = p.type;
             this.selected = p;
 
+            this.specBox.Text = p.x.ToString() + ";" + p.y.ToString() + ";" + p.w.ToString() + ";" + p.h.ToString() + ";" + p.r.ToString();
+
             //if (this.selected.type == 0) radioButton1.Checked = true;
             //if (this.selected.type == 1) radioButton2.Checked = true;
             //if (this.selected.type == 2) radioButton3.Checked = true;
         }
+
         public propeditor()
         {
             InitializeComponent();
@@ -86,6 +89,40 @@ namespace wrenk
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
+
+        }
+
+        private void specBox_TextChanged(object sender, EventArgs e)
+        {
+            if (this.selected == null) return;
+
+            var spec=  specBox.Text.Split(';');
+            if(spec.Length==5)
+            {
+                double x, y, w, h, r;
+
+                if( double.TryParse(spec[0], out x) )
+                {
+                    this.selected.x = x;
+                }
+                if (double.TryParse(spec[1], out y))
+                {
+                    this.selected.y = y;
+                }
+                if (double.TryParse(spec[2], out w))
+                {
+                    this.selected.w = w;
+                }
+                if (double.TryParse(spec[3], out h))
+                {
+                    this.selected.h = h;
+                }
+                if (double.TryParse(spec[4], out r))
+                {
+                    this.selected.r = r;
+                }
+
+            }
 
         }
     }

@@ -751,13 +751,17 @@ namespace wrenk
             }
             if(e.KeyChar=='=')
             {
+                if (state.snap >= 0.25)
                 state.snap += 0.25;
+                else
+                    state.snap += 0.01;
             }
 
             if(e.KeyChar=='-')
             {
-                if(state.snap>0.25)
-                state.snap -= 0.25;
+                if (state.snap > 0.25)
+                    state.snap -= 0.25;
+                else state.snap -= 0.01;
             }
             int offs = 0;
             if (e.KeyChar == ']') offs = 1;
@@ -900,17 +904,31 @@ namespace wrenk
                 {
                     if(PE.selected !=null)
                     {
-                        if (e.Delta > 0) { PE.selected.w *= 1.05; PE.selected.h *= 1.05; }
-                        if (e.Delta < 0) { PE.selected.w *= 0.95; PE.selected.h *= 0.95; }
+
+                        if (!state.accumulator)
+                        {
+                            if (e.Delta > 0) { PE.selected.w *= 1.1; PE.selected.h *= 1.1; }
+                            if (e.Delta < 0) { PE.selected.w *= 0.9; PE.selected.h *= 0.9; }
+                            PE.synch(PE.selected);
+                        }
+                        else
+                        {
+                            double fta = 0.1;
+                            if (e.Delta > 0) { PE.selected.w += fta; PE.selected.h += fta; }
+                            if (e.Delta < 0) { PE.selected.w -= fta; PE.selected.h -= fta; }
+                            PE.synch(PE.selected);
+
+                        }
                     }
                 }
-                if (state.layer_index == state.LAYER_PROPS && state.accumulator)
+                if (state.layer_index == state.LAYER_PROPS && state.accumulator && (!state.modifier))
                 {
                     if (PE.selected != null)
                     {
                         float amt = 360.0f / 16.0f;
                         if (e.Delta > 0) { PE.selected.r -= amt; };
                         if (e.Delta < 0) { PE.selected.r += amt; }
+                        PE.synch(PE.selected);
                     }
                 }
             }
@@ -1047,6 +1065,7 @@ namespace wrenk
                     {
                         this.PE.selected.x = state.mx;
                         this.PE.selected.y = state.my;
+                        this.PE.synch(this.PE.selected);
                     }
                 }
             }
@@ -1468,9 +1487,9 @@ namespace wrenk
                                 i++;
                             }
 
-                            g.DrawString("input state:" + state.input_state.ToString(), f, Brushes.Black, 10, 80);
-                            g.DrawString("snap:" + state.snap.ToString(), f, Brushes.Black, 10, 90);
-                            g.DrawString("curs:" + state.mx.ToString() + "," + state.my.ToString(), f, Brushes.Black, 10, 100);
+                            g.DrawString("input state:" + state.input_state.ToString(), f, Brushes.Red, 10, 80);
+                            g.DrawString("snap:" + state.snap.ToString(), f, Brushes.Red, 10, 90);
+                            g.DrawString("curs:" + state.mx.ToString() + "," + state.my.ToString(), f, Brushes.Red, 10, 100);
 
                         }
 
